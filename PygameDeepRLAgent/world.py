@@ -5,8 +5,8 @@ BLACK = 0, 0, 0
 
 class World:
     def __init__(self, settings):
-        w = settings.screen_width
-        h = settings.screen_height
+        w = settings.screenWidth
+        h = settings.screenHeight
 
         self.walls = []
 
