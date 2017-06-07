@@ -9,7 +9,7 @@ pygame.init()
 settings = init.Settings()
 screen = pygame.display.set_mode([settings.screen_width, settings.screen_height])
 
-world = world.World()
+world = world.World(settings)
 
 
 
