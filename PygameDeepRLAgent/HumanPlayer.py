@@ -1,13 +1,15 @@
 import pygame
 import numpy as np
+import WeaponSystem as ws
 
 class HumanPlayer:
     def __init__(self, settings):
         #Physical attributes
         self.pos = np.array([settings.screenWidth / 2, settings.screenHeight / 2])
         self.speed = 10
-        self.w = int(settings.screenWidth / 50)
-        self.h = int(settings.screenHeight / 50)
+        self.ws = ws.WeaponSystem(settings)
+        self.w = int(settings.screenWidth / 25)
+        self.h = int(settings.screenHeight / 25)
         # needed for collision checking
         self.vertices = []
         self.vertices.append(np.array([0, 0]))
@@ -33,13 +35,16 @@ class HumanPlayer:
 
         # Bullets, +self.size/2 to get the bullet centered
         if keys[pygame.K_UP]:
-            self.ws.shoot([0, -1], self.pos + int(self.size / 2))
+            self.ws.shoot([0, -1], self.pos + np.array([self.w / 2, self.h / 2]))
         elif keys[pygame.K_DOWN]:
-            self.ws.shoot([0, 1], self.pos + int(self.size / 2))
+            self.ws.shoot([0, 1], self.pos + np.array([self.w / 2, self.h / 2]))
         elif keys[pygame.K_LEFT]:
-            self.ws.shoot([-1, 0], self.pos + int(self.size / 2))
+            self.ws.shoot([-1, 0], self.pos + np.array([self.w / 2, self.h / 2]))
         elif keys[pygame.K_RIGHT]:
-            self.ws.shoot([1, 0], self.pos + int(self.size / 2))
+            self.ws.shoot([1, 0], self.pos + np.array([self.w / 2, self.h / 2]))
+
+        self.ws.update()
 
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)
+        self.ws.draw(screen)

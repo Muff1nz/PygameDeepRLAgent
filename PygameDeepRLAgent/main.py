@@ -16,20 +16,25 @@ world = world.World(settings)
 player = hp.HumanPlayer(settings)
 
 def main():
+    fpsTimer = 0
     while 1:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
+        if (fpsTimer + settings.mspf) <= pygame.time.get_ticks():
+            fpsTimer = pygame.time.get_ticks()
+
+            #Check events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
 
 
-        #Update stuff
-        player.update()
+            #Update stuff
+            player.update()
 
-        #Render stuff
-        screen.fill(WHITE)
-        world.draw(screen)
-        player.draw(screen)
-        pygame.display.flip()
+            #Render stuff
+            screen.fill(WHITE)
+            world.draw(screen)
+            player.draw(screen)
+            pygame.display.flip()
 
 if __name__ == "__main__":
     main()

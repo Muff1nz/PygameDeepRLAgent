@@ -12,8 +12,8 @@ class Bullet:
         self.timer = 0
         self.TTL = 3 #time to live in seconds
 
-        self.h = settings.screenHeight / 100
-        self.w = settings.screenWidth / 100
+        self.h = int(settings.screenHeight / 40)
+        self.w = int(settings.screenWidth / 40)
         self.sprite = pygame.image.load("./Assets/Player.png")
         self.sprite = pygame.transform.scale(self.sprite, (self.w, self.h))
 
@@ -29,7 +29,7 @@ class Bullet:
 
     def shoot(self, pos, dir):
         self.active = True
-        self.pos = np.array(pos) - int(self.size/2)
+        self.pos = np.array(pos)- np.array([self.w/2, self.h/2])
         self.dir = np.array(dir)
         self.timer = 0
 
