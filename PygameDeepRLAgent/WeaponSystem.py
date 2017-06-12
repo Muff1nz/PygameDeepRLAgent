@@ -1,6 +1,4 @@
 import Bullet
-import numpy as np
-from init import *
 
 class WeaponSystem:
     def __init__(self, settings):

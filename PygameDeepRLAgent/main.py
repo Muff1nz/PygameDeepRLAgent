@@ -3,6 +3,7 @@ import sys
 
 import init
 import world
+import physics
 import HumanPlayer as hp
 
 WHITE = 255, 255, 255
@@ -14,6 +15,8 @@ screen = pygame.display.set_mode([settings.screenWidth, settings.screenHeight])
 world = world.World(settings)
 
 player = hp.HumanPlayer(settings)
+
+physics = physics.physicsHandler(world, player)
 
 def main():
     fpsTimer = 0
@@ -29,6 +32,7 @@ def main():
 
             #Update stuff
             player.update()
+            physics.update()
 
             #Render stuff
             screen.fill(WHITE)

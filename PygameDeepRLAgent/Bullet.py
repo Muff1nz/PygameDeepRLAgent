@@ -5,6 +5,8 @@ class Bullet:
     def __init__(self, settings):
         self.settings = settings
 
+        self.type = "bullet"
+
         self.pos = np.array([0, 0])
         self.size = 16
         self.dir = np.array([0, 0])

@@ -2,14 +2,17 @@ import pygame
 import numpy as np
 import WeaponSystem as ws
 
-class HumanPlayer:
+class HumanPlayer():
     def __init__(self, settings):
+        self.type = "character"
+
         #Physical attributes
         self.pos = np.array([settings.screenWidth / 2, settings.screenHeight / 2])
         self.speed = 10
         self.ws = ws.WeaponSystem(settings)
         self.w = int(settings.screenWidth / 25)
         self.h = int(settings.screenHeight / 25)
+        self.size = np.array([self.h, self.w])
         # needed for collision checking
         self.vertices = []
         self.vertices.append(np.array([0, 0]))
