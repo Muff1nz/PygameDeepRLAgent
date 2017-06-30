@@ -5,11 +5,13 @@ import WeaponSystem as ws
 class HumanPlayer():
     def __init__(self, settings):
         self.type = "character"
+        self.settings = settings
 
         #Physical attributes
-        self.pos = np.array([settings.screenWidth / 2, settings.screenHeight / 2])
+        self.pos = np.array([settings.screenWidth / 2, settings.screenHeight / 5])
+        self.oldPos = self.pos.copy()
         self.speed = 10
-        self.ws = ws.WeaponSystem(settings)
+        self.ws = ws.WeaponSystem(settings, "./Assets/Player.png")
         self.w = int(settings.screenWidth / 25)
         self.h = int(settings.screenHeight / 25)
         self.size = np.array([self.h, self.w])
@@ -26,6 +28,7 @@ class HumanPlayer():
 
     def update(self):
         keys = pygame.key.get_pressed()
+        self.oldPos = self.pos.copy()
         # Movement
         if keys[pygame.K_d]:
             self.pos[0] += self.speed
@@ -51,3 +54,24 @@ class HumanPlayer():
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)
         self.ws.draw(screen)
+
+    def reset(self):
+        self.pos = np.array([self.settings.screenWidth / 2, self.settings.screenHeight / 5])
+        self.ws.reset()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

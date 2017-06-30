@@ -1,42 +1,64 @@
 import numpy as np
 
 class physicsHandler():
-    def __init__(self, world, player):
+    def __init__(self, world, player, enemies):
         self.world = world
         # Array of boxes, could be a player, bullets, enemies...
-        self.boxes = []
-        self.boxes.append(player)
-        for bullet in player.ws.bullets:
-            self.boxes.append(bullet)
-        # Old positions of boxes, needed for collision resolution
-        self.oldBoxPos = []
-        for box in self.boxes:
-            self.oldBoxPos.append(box.pos.copy())
+        self.player = player
+        self.enemies = enemies.enemies
+        self.events = []
 
     # Checks for collisions between objects in game and resolves them
     def update(self):
-        for i, box in enumerate(self.boxes):
-            for wall in self.world.walls:
-                if self.boxLineCollision(wall, box):
-                    box.pos = self.oldBoxPos[i].copy()
-                    if box.type == "bullet":                # Make bullets bounce off of walls
-                        if wall.straight:                   # Straight wall, reverse direction
+        # checks collisions with the walls
+        self.boxWallCollision(self.player)
+        for bullet in self.player.ws.bullets:
+            if bullet.active:
+                self.boxWallCollision(bullet)
+
+        for enemy in self.enemies:
+            if enemy.active or enemy.ws.active:
+                self.boxWallCollision(enemy)
+                for bullet in enemy.ws.bullets:
+                    if bullet.active:
+                        self.boxWallCollision(bullet)
+
+
+        #Check if player is hitting any enemies
+        for bullet in self.player.ws.bullets:
+            if bullet.active:
+                for enemy in self.enemies:
+                    if enemy.active:
+                        if self.boxCollision(bullet, enemy):
+                            enemy.kill()
+                            self.events.append("Enemy killed")
+
+        #Check if enemies are hitting player
+        for enemy in self.enemies:
+            if enemy.ws.active:
+                for bullet in enemy.ws.bullets:
+                    if self.boxCollision(bullet, self.player):
+                        self.events.append("Player killed")
+
+
+    def boxWallCollision(self, box):
+        for wall in self.world.walls:
+            if self.boxLineCollision(wall, box):
+                box.pos = box.oldPos.copy()
+                if box.type == "bullet":  # Make bullets bounce off of walls
+                    if wall.straight:  # Straight wall, reverse direction
+                        box.dir *= -1
+                    else:
+                        box.dir = box.dir[::-1]  # Diagonal wall, swap x and y direction
+                        if wall.start[1] > wall.end[1]:  # Descending wall, reverse after swap
                             box.dir *= -1
-                        else:
-                            box.dir = box.dir[::-1]         # Diagonal wall, swap x and y direction
-                            if wall.start[1] > wall.end[1]: # Descending wall, reverse after swap
-                                box.dir *= -1
-
-        for i, box in enumerate(self.boxes):                # Update old positions
-            self.oldBoxPos[i] = box.pos.copy()
-
 
     # returns true if two boxes are colliding
     def boxCollision(self, box1, box2):
-        if (box1.pos[1] + box1.size <= box2.pos[1] or
-            box1.pos[1] >= box2.pos[1] + box2.size or
-            box1.pos[0] + box1.size <= box2.pos[0] or
-            box1.pos[0] >= box2.pos[0] + box2.size):
+        if (box1.pos[1] + box1.size[1] <= box2.pos[1] or
+            box1.pos[1] >= box2.pos[1] + box2.size[1] or
+            box1.pos[0] + box1.size[0] <= box2.pos[0] or
+            box1.pos[0] >= box2.pos[0] + box2.size[0]):
             return False
         return True
 
