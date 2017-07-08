@@ -8,23 +8,21 @@ class HumanPlayer():
         self.settings = settings
 
         #Physical attributes
-        self.pos = np.array([settings.screenWidth / 2, settings.screenHeight / 5])
+        self.pos = np.array([settings.screenRes / 2, settings.screenRes / 5])
         self.oldPos = self.pos.copy()
         self.speed = 10
         self.ws = ws.WeaponSystem(settings, "./Assets/Player.png")
-        self.w = int(settings.screenWidth / 25)
-        self.h = int(settings.screenHeight / 25)
-        self.size = np.array([self.h, self.w])
+        self.size = settings.screenRes // 25
         # needed for collision checking
         self.vertices = []
         self.vertices.append(np.array([0, 0]))
-        self.vertices.append(np.array([0, self.h]))
-        self.vertices.append(np.array([self.w, 0]))
-        self.vertices.append(np.array([self.w, self.h]))
+        self.vertices.append(np.array([0, self.size]))
+        self.vertices.append(np.array([self.size, 0]))
+        self.vertices.append(np.array([self.size, self.size]))
 
         #Graphical attributes
         self.sprite = pygame.image.load("./Assets/Player.png")
-        self.sprite = pygame.transform.scale(self.sprite, (self.w, self.h))
+        self.sprite = pygame.transform.scale(self.sprite, (self.size, self.size))
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -41,13 +39,13 @@ class HumanPlayer():
 
         # Bullets, +self.size/2 to get the bullet centered
         if keys[pygame.K_UP]:
-            self.ws.shoot([0, -1], self.pos + np.array([self.w / 2, self.h / 2]))
+            self.ws.shoot([0, -1], self.pos + np.array([self.size / 2, self.size / 2]))
         elif keys[pygame.K_DOWN]:
-            self.ws.shoot([0, 1], self.pos + np.array([self.w / 2, self.h / 2]))
+            self.ws.shoot([0, 1], self.pos + np.array([self.size / 2, self.size / 2]))
         elif keys[pygame.K_LEFT]:
-            self.ws.shoot([-1, 0], self.pos + np.array([self.w / 2, self.h / 2]))
+            self.ws.shoot([-1, 0], self.pos + np.array([self.size / 2, self.size / 2]))
         elif keys[pygame.K_RIGHT]:
-            self.ws.shoot([1, 0], self.pos + np.array([self.w / 2, self.h / 2]))
+            self.ws.shoot([1, 0], self.pos + np.array([self.size / 2, self.size / 2]))
 
         self.ws.update()
 
@@ -56,7 +54,7 @@ class HumanPlayer():
         self.ws.draw(screen)
 
     def reset(self):
-        self.pos = np.array([self.settings.screenWidth / 2, self.settings.screenHeight / 5])
+        self.pos = np.array([self.settings.screenRes / 2, self.settings.screenRes / 5])
         self.ws.reset()
 
 

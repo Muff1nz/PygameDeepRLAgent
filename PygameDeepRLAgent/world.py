@@ -4,36 +4,35 @@ BLACK = 0, 0, 0
 
 class World:
     def __init__(self, settings):
-        w = settings.screenWidth
-        h = settings.screenHeight
+        res = settings.screenRes
 
         self.walls = []
 
         #4 walls
-        self.walls.append(Line([0, h/5], [0, h - h / 5]))
-        self.walls.append(Line([w, h / 5], [w, h - h / 5]))
-        self.walls.append(Line([w / 5, 0], [w - w / 5, 0]))
-        self.walls.append(Line([w / 5, h], [w - w / 5, h]))
+        self.walls.append(Line([0, res/5], [0, res - res / 5]))
+        self.walls.append(Line([res, res / 5], [res, res - res / 5]))
+        self.walls.append(Line([res / 5, 0], [res - res / 5, 0]))
+        self.walls.append(Line([res / 5, res], [res - res / 5, res]))
 
         #4 corners
-        self.walls.append(Line([w - w / 5, 0], [w, h / 5]))
-        self.walls.append(Line([0, h / 5], [w / 5, 0]))
-        self.walls.append(Line([0, h - h / 5], [w / 5, h]))
-        self.walls.append(Line([w - w / 5, h], [w, h - h / 5]))
+        self.walls.append(Line([res - res / 5, 0], [res, res / 5]))
+        self.walls.append(Line([0, res / 5], [res / 5, 0]))
+        self.walls.append(Line([0, res - res / 5], [res / 5, res]))
+        self.walls.append(Line([res - res / 5, res], [res, res - res / 5]))
 
         # Center piece
         cs = 5 #center size
-        self.walls.append(Line([w / 2 - w / cs, h / 2], [w / 2, h / 2 + h / cs]))
-        self.walls.append(Line([w / 2, h / 2 + h / cs], [w / 2 + w / cs, h / 2]))
-        self.walls.append(Line([w / 2, h / 2 - h / cs], [w / 2 + w / cs, h / 2]))
-        self.walls.append(Line([w / 2 - w / cs, h / 2], [w / 2, h / 2 - h / cs]))
+        self.walls.append(Line([res / 2 - res / cs, res / 2], [res / 2, res / 2 + res / cs]))
+        self.walls.append(Line([res / 2, res / 2 + res / cs], [res / 2 + res / cs, res / 2]))
+        self.walls.append(Line([res / 2, res / 2 - res / cs], [res / 2 + res / cs, res / 2]))
+        self.walls.append(Line([res / 2 - res / cs, res / 2], [res / 2, res / 2 - res / cs]))
 
         #Navigation nodes:
         self.nodes = []
-        self.nodes.append(Node([w * 0.2, h * 0.2]))
-        self.nodes.append(Node([w * 0.8, h * 0.2]))
-        self.nodes.append(Node([w * 0.8, h * 0.8]))
-        self.nodes.append(Node([w * 0.2, h * 0.8]))
+        self.nodes.append(Node([res * 0.2, res * 0.2]))
+        self.nodes.append(Node([res * 0.8, res * 0.2]))
+        self.nodes.append(Node([res * 0.8, res * 0.8]))
+        self.nodes.append(Node([res * 0.2, res * 0.8]))
         for i, node in enumerate(self.nodes):
             node.neighbors.append(self.nodes[(i + 1) % len(self.nodes)])
             node.neighbors.append(self.nodes[(i - 1) % len(self.nodes)])

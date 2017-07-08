@@ -9,23 +9,21 @@ class Enemy:
         self.settings = settings
 
         # Physical attributes
-        self.pos = np.array([settings.screenWidth / 2, settings.screenHeight / 5])
+        self.pos = np.array([settings.screenRes / 2, settings.screenRes / 5])
         self.oldPos = self.pos.copy()
         self.speed = 10
         self.ws = ws.WeaponSystem(settings, "./Assets/Enemy.png")
-        self.w = int(settings.screenWidth / 25)
-        self.h = int(settings.screenHeight / 25)
-        self.size = np.array([self.h, self.w])
+        self.size = settings.screenRes // 25
         # needed for collision checking
         self.vertices = []
         self.vertices.append(np.array([0, 0]))
-        self.vertices.append(np.array([0, self.h]))
-        self.vertices.append(np.array([self.w, 0]))
-        self.vertices.append(np.array([self.w, self.h]))
+        self.vertices.append(np.array([0, self.size]))
+        self.vertices.append(np.array([self.size, 0]))
+        self.vertices.append(np.array([self.size, self.size]))
 
         # Graphical attributes
         self.sprite = pygame.image.load("./Assets/Enemy.png")
-        self.sprite = pygame.transform.scale(self.sprite, (self.w, self.h))
+        self.sprite = pygame.transform.scale(self.sprite, (self.size, self.size))
 
         #AI attributes
         self.active = True
@@ -66,7 +64,7 @@ class Enemy:
 
     def centerOnNode(self, node):
         self.pos = node.pos.copy()
-        self.pos -= self.size / 2  # Center the enemy on pos
+        self.pos -= np.array([self.size, self.size]) / 2  # Center the enemy on pos
 
     def kill(self):
         self.active = False

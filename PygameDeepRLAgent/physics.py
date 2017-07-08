@@ -55,10 +55,10 @@ class physicsHandler():
 
     # returns true if two boxes are colliding
     def boxCollision(self, box1, box2):
-        if (box1.pos[1] + box1.size[1] <= box2.pos[1] or
-            box1.pos[1] >= box2.pos[1] + box2.size[1] or
-            box1.pos[0] + box1.size[0] <= box2.pos[0] or
-            box1.pos[0] >= box2.pos[0] + box2.size[0]):
+        if (box1.pos[1] + box1.size <= box2.pos[1] or
+            box1.pos[1] >= box2.pos[1] + box2.size or
+            box1.pos[0] + box1.size <= box2.pos[0] or
+            box1.pos[0] >= box2.pos[0] + box2.size):
             return False
         return True
 

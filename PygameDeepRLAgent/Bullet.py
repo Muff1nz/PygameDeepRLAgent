@@ -14,17 +14,15 @@ class Bullet:
         self.timer = 0
         self.TTL = 3 #time to live in seconds
 
-        self.h = int(settings.screenHeight / 40)
-        self.w = int(settings.screenWidth / 40)
-        self.size = [self.w, self.h]
+        self.size = settings.screenRes // 40
         self.sprite = pygame.image.load(sprite)
-        self.sprite = pygame.transform.scale(self.sprite, (self.w, self.h))
+        self.sprite = pygame.transform.scale(self.sprite, (self.size, self.size))
 
         self.vertices = []
         self.vertices.append(np.array([0, 0]))
-        self.vertices.append(np.array([0, self.h]))
-        self.vertices.append(np.array([self.w, 0]))
-        self.vertices.append(np.array([self.w, self.h]))
+        self.vertices.append(np.array([0, self.size]))
+        self.vertices.append(np.array([self.size, 0]))
+        self.vertices.append(np.array([self.size, self.size]))
         self.active = False
 
     def draw(self, screen):
@@ -32,7 +30,7 @@ class Bullet:
 
     def shoot(self, pos, dir):
         self.active = True
-        self.pos = np.array(pos)- np.array([self.w/2, self.h/2])
+        self.pos = np.array(pos)- np.array([self.size/2, self.size/2])
         self.dir = np.array(dir)
         self.timer = 0
 
