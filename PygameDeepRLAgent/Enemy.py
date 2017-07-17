@@ -1,30 +1,13 @@
 import pygame
 import numpy as np
 import random
-import WeaponSystem as ws
 
-class Enemy:
-    def __init__(self, settings, world):
+from Actor import Actor
+
+class Enemy(Actor):
+    def __init__(self, settings, spritePath, world):
+        super(Enemy, self).__init__(settings, spritePath)
         self.type = "enemy"
-        self.settings = settings
-
-        # Physical attributes
-        self.pos = np.array([settings.screenRes / 2, settings.screenRes / 5])
-        self.oldPos = self.pos.copy()
-        self.speed = 10
-        self.ws = ws.WeaponSystem(settings, "./Assets/Enemy.png")
-        self.size = settings.screenRes // 25
-        # needed for collision checking
-        self.vertices = []
-        self.vertices.append(np.array([0, 0]))
-        self.vertices.append(np.array([0, self.size]))
-        self.vertices.append(np.array([self.size, 0]))
-        self.vertices.append(np.array([self.size, self.size]))
-
-        # Graphical attributes
-        self.sprite = pygame.image.load("./Assets/Enemy.png")
-        self.sprite = pygame.transform.scale(self.sprite, (self.size, self.size))
-
         #AI attributes
         self.active = True
         self.nodes = world.nodes

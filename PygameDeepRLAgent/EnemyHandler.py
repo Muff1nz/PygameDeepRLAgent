@@ -2,7 +2,8 @@ import random
 import Enemy
 
 class EnemyHandler:
-    def __init__(self, settings, world):
+    def __init__(self, settings, spritePath, world):
+        self.spritePath = spritePath
         self.enemies = []
         self.timer = 0
         self.settings = settings
@@ -22,7 +23,7 @@ class EnemyHandler:
             if not enemy.active:
                 enemy.spawn()
                 return
-        self.enemies.append(Enemy.Enemy(self.settings, self.world))
+        self.enemies.append(Enemy.Enemy(self.settings, self.spritePath, self.world))
 
     def draw(self, screen):
         for enemy in self.enemies:

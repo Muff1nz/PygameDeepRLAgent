@@ -2,29 +2,30 @@ import pygame
 import sys
 import tensorflow as tf
 
-import init
-import world
-import physics
-import HumanPlayer as hp
-import EnemyHandler as em
-import GameHandler as gh
-import ReplayMemory as rm
+from init import Settings
+from world import World
+from physics import physicsHandler
+from HumanPlayer import HumanPlayer
+from DQNAgent import DQNAgent
+from EnemyHandler import EnemyHandler
+from GameHandler import GameHandler
+from ReplayMemory import ReplayMemory
 
 WHITE = 255, 255, 255
 
 pygame.init()
-settings = init.Settings()
+settings = Settings()
 screen = pygame.display.set_mode([settings.screenRes, settings.screenRes])
 
-world = world.World(settings)
+world = World(settings)
 
-player = hp.HumanPlayer(settings)
-enemyHandler = em.EnemyHandler(settings, world)
+player = DQNAgent(settings, "./Assets/Player.png")
+enemyHandler = EnemyHandler(settings, "./Assets/Enemy.png", world)
 
-physics = physics.physicsHandler(world, player, enemyHandler)
+physics = physicsHandler(world, player, enemyHandler)
 
-gameHandler = gh.GameHandler(physics.events, enemyHandler, player)
-replayMemory = rm.ReplayMemory(settings)
+gameHandler = GameHandler(physics.events, enemyHandler, player)
+replayMemory = ReplayMemory(settings)
 
 def main():
     with tf.Session() as sess:
@@ -50,9 +51,9 @@ def main():
 
                 #Update stuff
                 enemyHandler.update()
-                player.update()
-                physics.update()
-                gameHandler.update()
+                player.update(replayMemory.ei)
+                physics.update(replayMemory.ei)
+                gameHandler.update(replayMemory)
 
                 #Render stuff
                 screen.fill(WHITE)
@@ -63,10 +64,10 @@ def main():
                 frames += 1
 
                 #Replay Memory
-                replayMemory.update(screen)
+                replayMemory.update(screen, player)
 
                 # log images, for testing
-                if not frames % settings.deepRLSampleRate:
+                if not frames % settings.deepRLSampleRate and settings.logProcessedFrames:
                     image = replayMemory.processedFrames[replayMemory.ei]
                     imageSummary = tf.expand_dims(image, 0)
                     imageSummary = tf.expand_dims(imageSummary, 3)

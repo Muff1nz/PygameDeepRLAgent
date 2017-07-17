@@ -13,9 +13,9 @@ class WeaponSystem:
         self.fireRate = 0.5
         self.timer = 0
 
-    def shoot(self, dir, pos):
+    def shoot(self, dir, pos, experienceIndex=-1):
         if self.timer >= (self.fireRate * self.settings.gameSecond):
-            self.bullets[self.nextBullet].shoot(pos, dir)
+            self.bullets[self.nextBullet].shoot(pos, dir, experienceIndex)
             self.nextBullet = ((self.nextBullet + 1) % self.bulletCount)
             self.timer = 0
 

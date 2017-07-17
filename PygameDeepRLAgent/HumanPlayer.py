@@ -1,28 +1,12 @@
 import pygame
 import numpy as np
-import WeaponSystem as ws
 
-class HumanPlayer():
-    def __init__(self, settings):
-        self.type = "character"
-        self.settings = settings
+from Actor import Actor
 
-        #Physical attributes
-        self.pos = np.array([settings.screenRes / 2, settings.screenRes / 5])
-        self.oldPos = self.pos.copy()
-        self.speed = 10
-        self.ws = ws.WeaponSystem(settings, "./Assets/Player.png")
-        self.size = settings.screenRes // 25
-        # needed for collision checking
-        self.vertices = []
-        self.vertices.append(np.array([0, 0]))
-        self.vertices.append(np.array([0, self.size]))
-        self.vertices.append(np.array([self.size, 0]))
-        self.vertices.append(np.array([self.size, self.size]))
-
-        #Graphical attributes
-        self.sprite = pygame.image.load("./Assets/Player.png")
-        self.sprite = pygame.transform.scale(self.sprite, (self.size, self.size))
+class HumanPlayer(Actor):
+    def __init__(self, settings, spritePath):
+        super(HumanPlayer, self).__init__(settings, spritePath)
+        self.type = "player"
 
     def update(self):
         keys = pygame.key.get_pressed()
