@@ -17,41 +17,42 @@ pygame.init()
 settings = Settings()
 screen = pygame.display.set_mode([settings.screenRes, settings.screenRes])
 
-world = World(settings)
-
-player = DQNAgent(settings, "./Assets/Player.png")
-enemyHandler = EnemyHandler(settings, "./Assets/Enemy.png", world)
-
-physics = physicsHandler(world, player, enemyHandler)
-
-gameHandler = GameHandler(physics.events, enemyHandler, player)
-replayMemory = ReplayMemory(settings)
-
 def main():
     with tf.Session() as sess:
         writer = tf.summary.FileWriter(settings.tbPath)
+        world = World(settings)
+        replayMemory = ReplayMemory(settings)
+        player = DQNAgent(settings, "./Assets/Player.png", sess, replayMemory, writer)
+        enemyHandler = EnemyHandler(settings, "./Assets/Enemy.png", world)
+        physics = physicsHandler(world, player, enemyHandler)
+        gameHandler = GameHandler(physics.events, enemyHandler, player)
+
         fpsTimer = 0
         time = 0
         frames = 0
+
+        sess.run(tf.global_variables_initializer())
         while 1:
             if (fpsTimer + settings.mspf) <= pygame.time.get_ticks():
                 fpsTimer = pygame.time.get_ticks()
-                if time + 1025 < pygame.time.get_ticks():
+                if time + 1000 < pygame.time.get_ticks():
                     print("fps: " + str(frames))
-                    print("Player score: "  + str(gameHandler.playerScore))
+                    print("Player score: " + str(gameHandler.playerScore))
+                    print("Collision checks: " + str(physics.collisionChecks))
                     time = pygame.time.get_ticks()
                     frames = 0
 
                 #Check events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
+                        replayMemory.close()
                         writer.close()
                         sys.exit()
 
 
                 #Update stuff
                 enemyHandler.update()
-                player.update(replayMemory.ei)
+                player.update(replayMemory.ei, frames)
                 physics.update(replayMemory.ei)
                 gameHandler.update(replayMemory)
 
@@ -63,17 +64,15 @@ def main():
                 pygame.display.flip()
                 frames += 1
 
-                #Replay Memory
-                replayMemory.update(screen, player)
-
                 # log images, for testing
-                if not frames % settings.deepRLSampleRate and settings.logProcessedFrames:
-                    image = replayMemory.processedFrames[replayMemory.ei]
-                    imageSummary = tf.expand_dims(image, 0)
-                    imageSummary = tf.expand_dims(imageSummary, 3)
-                    imageSummary = tf.summary.image("pFrame" + str(settings.version), imageSummary)
-                    imageSummary = sess.run(imageSummary)
-                    writer.add_summary(imageSummary)
+                if not frames % settings.deepRLRate:
+                    replayMemory.update(screen, player)
+                    if settings.logProcessedFrames:
+                        imageSummary = [replayMemory.getState()]
+                        imageSummary = tf.expand_dims(imageSummary[0], 3)
+                        imageSummary = tf.summary.image("pFrame" + str(settings.version), imageSummary, max_outputs=4)
+                        imageSummary = sess.run(imageSummary)
+                        writer.add_summary(imageSummary)
 
 if __name__ == "__main__":
     main()

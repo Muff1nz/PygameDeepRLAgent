@@ -7,9 +7,11 @@ class physicsHandler():
         self.player = player
         self.enemies = enemies.enemies
         self.events = []
+        self.collisionChecks = 0
 
     # Checks for collisions between objects in game and resolves them
     def update(self, ei):
+        self.collisionChecks = 0
         # checks collisions with the walls
         self.boxWallCollision(self.player)
         for bullet in self.player.ws.bullets:
@@ -41,8 +43,8 @@ class physicsHandler():
                         if self.boxCollision(bullet, self.player):
                             self.events.append(["Player killed", ei])
 
-
     def boxWallCollision(self, box):
+        self.collisionChecks += 1
         for wall in self.world.walls:
             if self.boxLineCollision(wall, box):
                 box.pos = box.oldPos.copy()
@@ -56,6 +58,7 @@ class physicsHandler():
 
     # returns true if two boxes are colliding
     def boxCollision(self, box1, box2):
+        self.collisionChecks += 1
         if (box1.pos[1] + box1.size <= box2.pos[1] or
             box1.pos[1] >= box2.pos[1] + box2.size or
             box1.pos[0] + box1.size <= box2.pos[0] or
@@ -65,6 +68,7 @@ class physicsHandler():
 
     # returns true if a box and a line is colliding
     def boxLineCollision(self, line, box):
+        self.collisionChecks += 1
         sign = 0
         boundsCount = 0
         for vertex in box.vertices:

@@ -60,7 +60,7 @@ class Line:
                 self.line = lambda x, y: end[1] - y
 
     def draw(self, screen):
-        pygame.draw.line(screen, self.clr, self.start, self.end, 30)
+        pygame.draw.line(screen, self.clr, self.start, self.end, 50)
 
 class Node:
     def __init__(self, pos):
