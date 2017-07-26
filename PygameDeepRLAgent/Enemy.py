@@ -1,4 +1,3 @@
-import pygame
 import numpy as np
 import random
 
@@ -11,17 +10,25 @@ class Enemy(Actor):
         #AI attributes
         self.active = True
         self.nodes = world.nodes
+        self.nodeDistance = np.linalg.norm(self.nodes[0].pos - self.nodes[1].pos)
+        self.swayFrequency = 4
+        self.sway = 40
+        self.straightPos = np.array([0,0])
+        self.swayPos = np.array([0,0])
         self.spawn()
 
     def update(self):
         #Move to trarget node, and choose a new when reached
         if self.active:
-            if np.linalg.norm(self.targetNode.pos - self.pos) < 40:
+            distanceFromTarget = np.linalg.norm(self.targetNode.pos - self.straightPos)
+            if distanceFromTarget < 40:
                 self.centerOnNode(self.targetNode)
                 self.targetNode = self.targetNode.neighbors[random.randint(0, len(self.targetNode.neighbors) - 1)]
                 self.calcDir()
             self.oldPos = self.pos.copy()
-            self.pos += self.dir * self.speed
+            self.straightPos += self.dir * self.speed
+            self.swayPos = self.dir[::-1] * np.sin(distanceFromTarget * np.pi / self.nodeDistance * self.swayFrequency) * self.sway
+            self.pos = self.straightPos + self.swayPos
             #Shoot in a random direction
             shootdDir = [0, 0]
             sample = [1, -1]
@@ -48,6 +55,7 @@ class Enemy(Actor):
     def centerOnNode(self, node):
         self.pos = node.pos.copy()
         self.pos -= np.array([self.size, self.size]) / 2  # Center the enemy on pos
+        self.straightPos = self.pos.copy()
 
     def kill(self):
         self.active = False

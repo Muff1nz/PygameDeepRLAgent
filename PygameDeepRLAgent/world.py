@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 
 BLACK = 0, 0, 0
 
@@ -64,5 +65,5 @@ class Line:
 
 class Node:
     def __init__(self, pos):
-        self.pos = pos
+        self.pos = np.array(pos)
         self.neighbors = []

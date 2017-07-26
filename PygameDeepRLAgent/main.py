@@ -45,6 +45,7 @@ def main():
                 #Check events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
+                        player.save()
                         replayMemory.close()
                         writer.close()
                         sys.exit()

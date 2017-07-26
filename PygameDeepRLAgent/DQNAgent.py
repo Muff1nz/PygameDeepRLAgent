@@ -136,7 +136,7 @@ class DQNAgent(Actor):
 
     def save(self):
         print("SavingModel!")
-        self.saver.save(self.sess, self.path, global_step=self.step)
+        self.saver.save(self.sess, self.settings.tfGraphPath, global_step=self.step)
 
     def train(self, batch):
         targets = []
