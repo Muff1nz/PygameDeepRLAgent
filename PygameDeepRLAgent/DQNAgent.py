@@ -123,12 +123,9 @@ class DQNAgent(Actor):
             return trainOp
 
     def summaries(self):
-        self.reward = 0
-        self.rewardPlaceholder = tf.placeholder('int64')
-        with tf.name_scope('summaries'):
+        with tf.name_scope('cost_lr'):
             tf.summary.scalar('learningRate', self.lr)
             tf.summary.scalar('cost', self.cost)
-            tf.summary.scalar('reward', self.rewardPlaceholder)
             return tf.summary.merge_all()
 
     def forwardProp(self, state):
@@ -168,7 +165,6 @@ class DQNAgent(Actor):
         # Do fitting here
         summary, _ = self.sess.run([self.mergedSummaries, self.trainOp],
                                    feed_dict={
-                                       self.rewardPlaceholder: self.reward,
                                        self.dqnInput: states,
                                        self.y: targets
                                        }
