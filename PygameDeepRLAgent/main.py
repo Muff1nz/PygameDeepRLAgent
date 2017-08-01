@@ -33,8 +33,6 @@ def main():
         time = 0
         frames = 0
 
-
-
         sess.run(tf.global_variables_initializer())
         while 1:
             if (fpsTimer + settings.mspf) <= pygame.time.get_ticks():
@@ -49,7 +47,8 @@ def main():
                 #Check events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        player.save()
+                        if settings.saveCheckpoint:
+                            player.save()
                         replayMemory.close()
                         writer.close()
                         sys.exit()

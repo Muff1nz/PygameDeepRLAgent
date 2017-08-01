@@ -49,24 +49,29 @@ class physicsHandler():
         # collisions for player
         if GE.player:
             boxWallCollision(GE.player, GE.walls)
+            self.collisionChecks += 1
 
         for bullet in GE.playerBullets:
             boxWallCollision(bullet, GE.walls)
+            self.collisionChecks += 1
             for enemy in GE.enemies:
                 if boxCollision(bullet, enemy):
                     enemy.kill()
                     self.events.append(["Enemy killed", bullet.ei])
+                self.collisionChecks += 1
 
         # collisions for enemies
         for enemy in GE.enemies:
             boxWallCollision(enemy, GE.walls)
+            self.collisionChecks += 1
 
         for bullet in GE.enemyBullets:
             boxWallCollision(bullet, GE.walls)
+            self.collisionChecks += 1
             if GE.player:
                 if boxCollision(bullet, GE.player):
                     self.events.append(["Player killed", ei])
-
+                self.collisionChecks += 1
 
 #============================Helper functions========================================
 def boxWallCollision(box, walls):

@@ -18,7 +18,7 @@ class DQNAgent(Actor):
         self.mergedSummaries = self.summaries()
         self.saver = tf.train.Saver(max_to_keep=10, keep_checkpoint_every_n_hours=1)
         if settings.loadCheckpoint:
-            self.saver.restore(self.sess, settings.tfGraphPath + "-" + settings.tfGraphCheckpoint)
+            self.saver.restore(self.sess, settings.tfGraphPath + "-" + str(settings.tfCheckpoint))
             print("Global step: " + str(self.step.eval()))
             print("Loading dqn from " + settings.tfGraphPath)
 
@@ -28,8 +28,12 @@ class DQNAgent(Actor):
         dir = np.array([(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)])
 
         if frame % self.settings.deepRLRate: # Get a new action
-            action = self.forwardProp([self.rm.getState()])
-            action = np.argmax(action)
+            if random.random() > 0.01:
+                action = self.forwardProp([self.rm.getState()])
+                action = np.argmax(action)
+            else:
+                print("Acting off-policy!")
+                action = random.randint(0, 24)
             self.lastAction = action
             if self.rm.full or self.rm.ei > self.settings.experienceMemorySizeStart:
                 self.train(self.rm.getExperienceBatch(self.settings.experienceBatchSize))
@@ -132,8 +136,10 @@ class DQNAgent(Actor):
         return self.sess.run(self.dqn, feed_dict={self.dqnInput: state})
 
     def save(self):
-        print("SavingModel!")
+        print("Saving model to " + self.settings.tfGraphPath)
+        self.settings.tfCheckpoint = self.sess.run(self.step)
         self.saver.save(self.sess, self.settings.tfGraphPath, global_step=self.step)
+        print("Saved model to " + self.settings.tfGraphPath)
 
     def train(self, batch):
         targets = []

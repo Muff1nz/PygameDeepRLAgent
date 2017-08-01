@@ -27,6 +27,8 @@ class ReplayMemory:
         self.frameProcessingThread = threading.Thread(target=self.processFrames, name="imageProcessor", args=(self.frameQueue, self.processedFramesLock))
         self.frameProcessingThread.start()
         self.full = False
+        if settings.loadCheckpoint:
+            self.load()
 
     def update(self, screen, player):
         self.ei = (self.ei + 1) % self.settings.experienceMemorySize
@@ -47,6 +49,7 @@ class ReplayMemory:
             ei = item[1]
 
             if ei == -1:
+                q.task_done()
                 return
 
             #down sample
@@ -91,3 +94,34 @@ class ReplayMemory:
 
     def close(self):
         self.frameQueue.put([-1, -1])
+        self.frameQueue.join()
+        if self.settings.saveCheckpoint:
+            self.save()
+
+    def save(self):
+        print("saving memory to " + self.settings.replayMemoryPath)
+        with open(self.settings.replayMemoryPath + "_replayMeta_" + str(self.settings.tfCheckpoint), mode='w') as f:
+            f.write(str(self.ei) + "\n")
+            f.write(str(self.full))
+
+        np.save(file=self.settings.replayMemoryPath + "_processedFrames_" + str(self.settings.tfCheckpoint) + ".npy",
+                arr=self.processedFrames)
+        np.save(file=self.settings.replayMemoryPath + "_experienceMemory_" + str(self.settings.tfCheckpoint) + ".npy",
+                arr=self.experienceMemory)
+        print("memory saved to " + self.settings.replayMemoryPath)
+
+    def load(self):
+        print("loading memory from " + self.settings.replayMemoryPath)
+        with open(self.settings.replayMemoryPath + "_replayMeta_" + str(self.settings.tfCheckpoint), mode='r') as f:
+            self.ei = int(f.readline())
+            self.full = f.readline()
+            self.full = False if self.full == "False" else True
+
+        self.processedFrames = np.load(
+            file=self.settings.replayMemoryPath + "_processedFrames_" + str(self.settings.tfCheckpoint) + ".npy"
+        )
+        self.experienceMemory = np.load(
+            file=self.settings.replayMemoryPath + "_experienceMemory_" + str(self.settings.tfCheckpoint) + ".npy"
+        )
+        print("memory loaded from " + self.settings.replayMemoryPath)
+

@@ -1,6 +1,7 @@
 class Settings():
     def __init__(self):
-        self.version = "0.85"
+        self.version = "0.9"
+        self.agentName = "dqn_1"
         self.logProcessedFrames = False # Doing this is very expensive
 
         self.screenRes = 1024 # Screen is always a square
@@ -10,7 +11,7 @@ class Settings():
 
         self.quadTreeDepth = 2
         self.quadTreeMaxObjects = 10
-        self.renderQuads = True
+        self.renderQuads = False
 
         self.experienceMemorySize = 100000 # Length of expeirence memory
         self.experienceMemorySizeStart = 1000
@@ -22,9 +23,11 @@ class Settings():
             self.processedRes += 1
         self.stateDepth = 4
 
-        self.tfGraphPath = "/deepRLAgent/DQN/dqnAgent" + self.version
-        self.tfGraphCheckpoint = -1
-        self.loadCheckpoint = False
-        self.tbPath = "/deepRLAgent/tensorboard/" + self.version # path for storing tensorboard logs
+        self.replayMemoryPath = 'C:/deepRLAgent/Memory/' + self.agentName + "_" + self.version
+        self.tfGraphPath = 'C:/deepRLAgent/Agent/' + self.agentName + "_" + self.version
+        self.tfCheckpoint = 18886 # Check point to load, this gets set automatically when saving
+        self.loadCheckpoint = True
+        self.saveCheckpoint = True
+        self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.agentName + "_" + self.version # path for storing tensorboard logs
 
         self.gpuMemoryFraction = 0.66
