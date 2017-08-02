@@ -18,7 +18,6 @@ class EnemyHandler:
             self.spawn()
 
     def spawn(self):
-        print("SPAWNING ENEMY")
         for enemy in self.enemies:
             if not enemy.active:
                 enemy.spawn()

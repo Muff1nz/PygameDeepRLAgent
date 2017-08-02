@@ -1,6 +1,6 @@
 class Settings():
     def __init__(self):
-        self.version = "0.9"
+        self.version = "0.91"
         self.agentName = "dqn_1"
         self.logProcessedFrames = False # Doing this is very expensive
 
@@ -25,8 +25,8 @@ class Settings():
 
         self.replayMemoryPath = 'C:/deepRLAgent/Memory/' + self.agentName + "_" + self.version
         self.tfGraphPath = 'C:/deepRLAgent/Agent/' + self.agentName + "_" + self.version
-        self.tfCheckpoint = 18886 # Check point to load, this gets set automatically when saving
-        self.loadCheckpoint = True
+        self.tfCheckpoint = -1 # Check point to load, this gets set automatically when saving
+        self.loadCheckpoint = False
         self.saveCheckpoint = True
         self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.agentName + "_" + self.version # path for storing tensorboard logs
 

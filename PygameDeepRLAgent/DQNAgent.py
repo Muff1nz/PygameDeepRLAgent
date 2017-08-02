@@ -24,10 +24,10 @@ class DQNAgent(Actor):
 
         self.writer = writer
 
-    def update(self, ei, frame):
+    def update(self, ei, counter):
         dir = np.array([(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)])
 
-        if frame % self.settings.deepRLRate: # Get a new action
+        if not (counter % self.settings.deepRLRate): # Get a new action
             if random.random() > 0.01:
                 action = self.forwardProp([self.rm.getState()])
                 action = np.argmax(action)

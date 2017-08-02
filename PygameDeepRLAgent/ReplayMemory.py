@@ -33,7 +33,7 @@ class ReplayMemory:
     def update(self, screen, player):
         self.ei = (self.ei + 1) % self.settings.experienceMemorySize
 
-        if self.ei == self.settings.experienceMemorySize and not self.full:
+        if self.ei == (self.settings.experienceMemorySize - 1) and not self.full:
             self.full = True
 
         self.experienceMemory[self.ei, 0] = player.lastAction
