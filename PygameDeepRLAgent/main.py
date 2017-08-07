@@ -33,8 +33,8 @@ def main():
         time = 0
         frames = 0
         counter = 0
-
-        sess.run(tf.global_variables_initializer())
+        if not settings.loadCheckpoint:
+            sess.run(tf.global_variables_initializer())
         while 1:
             if (fpsTimer + settings.mspf) <= pygame.time.get_ticks():
                 fpsTimer = pygame.time.get_ticks()

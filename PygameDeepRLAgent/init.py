@@ -25,8 +25,8 @@ class Settings():
 
         self.replayMemoryPath = 'C:/deepRLAgent/Memory/' + self.agentName + "_" + self.version
         self.tfGraphPath = 'C:/deepRLAgent/Agent/' + self.agentName + "_" + self.version
-        self.tfCheckpoint = -1 # Check point to load, this gets set automatically when saving
-        self.loadCheckpoint = False
+        self.tfCheckpoint = 2281716 # Check point to load, this gets set automatically when saving
+        self.loadCheckpoint = True
         self.saveCheckpoint = True
         self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.agentName + "_" + self.version # path for storing tensorboard logs
 
