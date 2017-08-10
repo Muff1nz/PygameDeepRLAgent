@@ -13,7 +13,7 @@ class physicsHandler():
         self.quadTree = None
 
     # Checks for collisions between objects in game and resolves them
-    def update(self, ei):
+    def update(self, playerTimeStep):
         if self.quadTree:
             self.quadTree.clear()
         # Make quadTree
@@ -36,16 +36,16 @@ class physicsHandler():
         self.quadTree = QuadTree(GE, self.settings)
 
         self.collisionChecks = 0
-        self.traverseAndCheckQuads(self.quadTree, ei)
+        self.traverseAndCheckQuads(self.quadTree, playerTimeStep)
 
-    def traverseAndCheckQuads(self, quad, ei):
+    def traverseAndCheckQuads(self, quad, playerTimeStep):
         if len(quad.nodes):
             for q in quad.nodes:
-                self.traverseAndCheckQuads(q, ei)
+                self.traverseAndCheckQuads(q, playerTimeStep)
         else:
-            self.checkCollisions(quad.GE, ei)
+            self.checkCollisions(quad.GE, playerTimeStep)
 
-    def checkCollisions(self, GE, ei):
+    def checkCollisions(self, GE, playerTimeStep):
         # collisions for player
         if GE.player:
             boxWallCollision(GE.player, GE.walls)
@@ -57,7 +57,7 @@ class physicsHandler():
             for enemy in GE.enemies:
                 if boxCollision(bullet, enemy):
                     enemy.kill()
-                    self.events.append(["Enemy killed", bullet.ei])
+                    self.events.append(["Enemy killed", bullet.playerTimeStep])
                 self.collisionChecks += 1
 
         # collisions for enemies
@@ -70,7 +70,7 @@ class physicsHandler():
             self.collisionChecks += 1
             if GE.player:
                 if boxCollision(bullet, GE.player):
-                    self.events.append(["Player killed", ei])
+                    self.events.append(["Player killed", playerTimeStep])
                 self.collisionChecks += 1
 
 #============================Helper functions========================================
