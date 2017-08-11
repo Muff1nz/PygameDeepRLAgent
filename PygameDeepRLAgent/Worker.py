@@ -9,6 +9,7 @@ class Worker:
         self.name = "worker" + str(i)
         self.settings = settings
         self.trainer = trainer
+        self.writer = tf.summary.FileWriter(settings.tbPath + self.name)
 
         self.localAC = ACNetwork(settings, self.name, trainer)
         globalNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
@@ -26,7 +27,6 @@ class Worker:
         frames = episodeData[:, 0]
         actions = episodeData[:, 1]
         rewards = episodeData[:, 2]
-        nextFrames = episodeData[:, 3]
         frames = np.asarray(frames.tolist())
 
 
@@ -48,6 +48,7 @@ class Worker:
         sess.run([self.localAC.applyGrads], feed_dict=feedDict)
 
     def work(self, settings, gameDataQueue, playerActionQueue, sess, coord):
+        episodeCount = 0
         with sess.as_default(), sess.graph.as_default():
             while not coord.should_stop():
                 sess.run(self.updateLocalVars)
@@ -71,8 +72,13 @@ class Worker:
                         episodeValues.append(value[0,0])
                     elif gameData[0] == "EpisodeData":
                         print("{} is training!".format(self.name))
-                        self.train(gameData[1], episodeValues, sess, 0.99)
+                        self.train(gameData[1], episodeValues, sess, settings.gamma)
+                        gameData = gameDataQueue.get()
+                        summary = tf.Summary()
+                        summary.value.add(tag="Score", simple_value=gameData[1])
+                        self.writer.add_summary(summary, episodeCount)
                         episodeInProgress = False
                     else:
                         print("Invalid game data!")
+                episodeCount += 1
 

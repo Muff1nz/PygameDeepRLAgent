@@ -71,6 +71,7 @@ class ClusterCube:
         if not self.episodeInProgress:
             self.episodeData[len(self.episodeData)-1][2] = -1  # Assign reward of -1 because player lost
             self.gameDataQueue.put(["EpisodeData", self.episodeData])
+            self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
             self.episodeData = []
             self.gameHandler.resetGame()
             self.playerTimeStep = -1
@@ -92,9 +93,7 @@ class ClusterCube:
             self.playerAction = self.playerActionQueue.get()
             self.playerTimeStep += 1
             # Rewards default to 0, game handler will track causality and update
-            self.episodeData.append([self.getCurrentFrame(), self.playerAction, 0, None])
-            if len(self.episodeData) > 1:
-                self.episodeData[len(self.episodeData) - 2][3] = self.getCurrentFrame()
+            self.episodeData.append([self.getCurrentFrame(), self.playerAction, 0])
 
         # Update stuff
         self.enemyHandler.update()
