@@ -1,9 +1,11 @@
 class Settings():
     def __init__(self):
-        self.version = "0.92"
+        # General settings:
+        self.version = "0.93_firstOverNightTest"
         self.agentName = "A3C"
-        self.logProcessedFrames = False # Doing this is very expensive
+        self.gpuMemoryFraction = 0.66
 
+        # Game settings
         self.screenRes = 1024 # Screen is always a square
         self.gameSecond = 60 # Amount of frames considered a second in game
         self.fps = 6000 # Maximum fps for the game
@@ -13,6 +15,7 @@ class Settings():
         self.quadTreeMaxObjects = 10
         self.renderQuads = False
 
+        # AI settings:
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
         self.downSampleFactor = 64
         self.processedRes = self.screenRes // (self.screenRes // self.downSampleFactor)
@@ -27,6 +30,4 @@ class Settings():
         self.tfCheckpoint = 2281716 # Check point to load, this gets set automatically when saving
         self.loadCheckpoint = True
         self.saveCheckpoint = True
-        self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.agentName + "_" + self.version # path for storing tensorboard logs
-
-        self.gpuMemoryFraction = 0.66
+        self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.agentName + "_" + self.version

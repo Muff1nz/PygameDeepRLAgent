@@ -5,9 +5,11 @@ import scipy.signal
 from ACNetwork import ACNetwork
 
 class Worker:
-    def __init__(self, settings, i, trainer):
+    def __init__(self, settings, i, trainer, globalEpisodes):
         self.name = "worker" + str(i)
         self.settings = settings
+        self.globalEpisodes = globalEpisodes
+        self.increment = self.globalEpisodes.assign_add(1)
         self.trainer = trainer
         self.writer = tf.summary.FileWriter(settings.tbPath + self.name)
 
@@ -47,8 +49,8 @@ class Worker:
                      self.localAC.stateIn[1]: rnnState[1]}
         sess.run([self.localAC.applyGrads], feed_dict=feedDict)
 
-    def work(self, settings, gameDataQueue, playerActionQueue, sess, coord):
-        episodeCount = 0
+    def work(self, settings, gameDataQueue, playerActionQueue, sess, coord, saver):
+        episodeCount = sess.run(self.globalEpisodes)
         with sess.as_default(), sess.graph.as_default():
             while not coord.should_stop():
                 sess.run(self.updateLocalVars)
@@ -80,15 +82,29 @@ class Worker:
                         bootstrapValues = episodeValues[0:settings.bootStrapCutOff]
                         episodeValues = episodeValues[settings.bootStrapCutOff::]
                         self.train(gameData[1], bootstrapValues, sess, settings.gamma, bootStrapValue)
+                        sess.run(self.updateLocalVars)
                     elif gameData[0] == "EpisodeData":
                         print("{} is training!".format(self.name))
                         self.train(gameData[1], episodeValues, sess, settings.gamma)
                         gameData = gameDataQueue.get()
+
                         summary = tf.Summary()
                         summary.value.add(tag="Score", simple_value=gameData[1])
                         self.writer.add_summary(summary, episodeCount)
+                        self.writer.flush()
+
                         episodeInProgress = False
                         episodeValues = []
+                        if self.name == "worker0":
+                            sess.run(self.increment)
+                            print(sess.run(self.globalEpisodes))
+                            if not episodeCount % 100:
+                                print("worker0 is saving the tf graph!")
+                                saver.save(sess, settings.tfGraphPath + settings.agentName, self.globalEpisodes)
+                    elif gameData[0] == "Game closed!":
+                        print("{}s game closed, saving and quitting program!".format(self.name))
+                        saver.save(sess, settings.tfGraphPath + settings.agentName, self.globalEpisodes)
+                        coord.request_stop()
                     else:
                         print("Invalid game data!")
                 episodeCount += 1

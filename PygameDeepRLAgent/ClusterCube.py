@@ -74,6 +74,8 @@ class ClusterCube:
             self.gameDataQueue.put(["EpisodeData", self.episodeData])
             self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
             self.episodeData = []
+            with self.processedFramesLock:
+                self.processedFrames = []
             self.gameHandler.resetGame()
             self.playerTimeStep = -1
             self.bootStrapCounter = 0
@@ -103,6 +105,9 @@ class ClusterCube:
                                         bootStrapData,
                                         self.episodeData[0][0]])
                 self.bootStrapCounter += 1
+                with self.processedFramesLock:
+                    self.processedFrames = self.processedFrames[self.settings.bootStrapCutOff::]
+
 
 
             # Send frame to
@@ -123,6 +128,6 @@ class ClusterCube:
         # Check events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                sys.exit()
+                self.gameDataQueue.put(["Game closed!"])
 
         self.gameCounter += 1

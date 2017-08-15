@@ -6,6 +6,7 @@ from __future__ import print_function
 from multiprocessing import Process, Queue
 from threading import Thread
 import tensorflow as tf
+import pygame
 
 from ACNetwork import ACNetwork
 from Worker import Worker
@@ -17,21 +18,23 @@ def gameProcess(settings, gameDataQueue, playerActionQueue):
     while 1:
         game.runGameLoop()
 
-def workerThread(worker, settings, sess, coord):
+def workerThread(worker, settings, sess, coord, saver):
     gameDataQueue, playerActionQueue = Queue(), Queue()
     game = Process(target=gameProcess, args=(settings, gameDataQueue, playerActionQueue))
     game.start()
-    while 1:
-        worker.work(settings, gameDataQueue, playerActionQueue, sess, coord)
+    worker.work(settings, gameDataQueue, playerActionQueue, sess, coord, saver)
+    game.terminate()
 
 def main():
     settings = Settings()
 
+    globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
     trainer = tf.train.AdamOptimizer()
     globalNetwork = ACNetwork(settings, "global")
     workers = []
     for i in range(settings.workerCount):
-        workers.append(Worker(settings, i, trainer))
+        workers.append(Worker(settings, i, trainer, globalEpisodes))
+    saver = tf.train.Saver(max_to_keep=10, keep_checkpoint_every_n_hours=1)
 
     workerThreads = []
     config = tf.ConfigProto()
@@ -40,11 +43,10 @@ def main():
         sess.run(tf.global_variables_initializer())
         coord = tf.train.Coordinator()
         for worker in workers:
-            thread = Thread(target=workerThread, args=(worker, settings, sess, coord))
+            thread = Thread(target=workerThread, args=(worker, settings, sess, coord, saver))
             thread.start()
             workerThreads.append(thread)
         coord.join(workerThreads)
-
 
 if __name__ == "__main__":
     main()
