@@ -28,6 +28,7 @@ class ClusterCube:
         self.episodeData = []
 
         self.gameCounter = 0
+        self.bootStrapCounter = 0
 
         self.gameDataQueue = gameDataQueue
         self.playerActionQueue = playerActionQueue
@@ -75,6 +76,7 @@ class ClusterCube:
             self.episodeData = []
             self.gameHandler.resetGame()
             self.playerTimeStep = -1
+            self.bootStrapCounter = 0
 
         # Render stuff
         self.screen.fill(WHITE)
@@ -85,10 +87,25 @@ class ClusterCube:
             self.physics.quadTree.draw(self.screen)
         pygame.display.flip()
 
-
         if not self.gameCounter % self.settings.deepRLRate:
-            self.frameQueue.put(self.screen.copy())
             # Put current frame on queue, so that worker agent can compute an action
+            self.frameQueue.put(self.screen.copy())
+
+            # Send the already reward credited data + an extra frame to the worker,
+            # so that he can use it to compute the value of the state and
+            # Bootstrap the learning from the current knowledge.
+            if self.settings.maxEpisodeLength <= len(self.episodeData):
+                # Due to causality tracking, we cant bootstrap from recent frames,
+                # as reward crediting is still in progress
+                bootStrapData = self.episodeData[0:self.settings.bootStrapCutOff]
+                self.episodeData = self.episodeData[self.settings.bootStrapCutOff::]
+                self.gameDataQueue.put(["Bootstrap",
+                                        bootStrapData,
+                                        self.episodeData[0][0]])
+                self.bootStrapCounter += 1
+
+
+            # Send frame to
             self.gameDataQueue.put(["CurrentFrame", self.getCurrentFrame()])
             self.playerAction = self.playerActionQueue.get()
             self.playerTimeStep += 1
@@ -99,7 +116,9 @@ class ClusterCube:
         self.enemyHandler.update()
         self.player.update(self.playerAction, self.playerTimeStep)
         self.physics.update(self.playerTimeStep)
-        self.episodeInProgress = self.gameHandler.update(self.episodeData)
+        self.episodeInProgress = self.gameHandler.update(self.episodeData,
+                                                         self.bootStrapCounter,
+                                                         self.settings.bootStrapCutOff)
 
         # Check events
         for event in pygame.event.get():

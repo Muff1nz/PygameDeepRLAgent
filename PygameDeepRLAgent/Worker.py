@@ -21,7 +21,7 @@ class Worker:
     def discount(self, x, gamma):
         return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
 
-    def train(self, episodeData, values, sess, gamma):
+    def train(self, episodeData, values, sess, gamma, bootStrapValue = 0.0):
         episodeData = np.array(episodeData)
         values = np.array(values)
         frames = episodeData[:, 0]
@@ -30,10 +30,10 @@ class Worker:
         frames = np.asarray(frames.tolist())
 
 
-        self.rewardsPlus = np.asarray(rewards.tolist())
-        discountedRewards = self.discount(self.rewardsPlus, gamma)
-        self.valuePlus = np.asarray(values.tolist())
-        advantages = rewards + gamma * self.valuePlus - self.valuePlus
+        self.rewardsPlus = np.asarray(rewards.tolist() + [bootStrapValue])
+        discountedRewards = self.discount(self.rewardsPlus, gamma)[:-1]
+        self.valuePlus = np.asarray(values.tolist() + [bootStrapValue])
+        advantages = rewards + gamma * self.valuePlus[1:] - self.valuePlus[:-1]
         advantages = self.discount(advantages, gamma)
 
         # Update the global network using gradients from loss
@@ -70,6 +70,16 @@ class Worker:
                         action = np.argmax(actionDist==action)
                         playerActionQueue.put(action)
                         episodeValues.append(value[0,0])
+                    elif gameData[0] == "Bootstrap":
+                        print("{} is bootstrapping!".format(self.name))
+                        frame = gameData[2]
+                        bootStrapValue = sess.run(self.localAC.value, # Compute value of most recent state
+                            feed_dict = {self.localAC.processedFrame: [frame],
+                                         self.localAC.stateIn[0]: rnnState[0],
+                                         self.localAC.stateIn[1]: rnnState[1]})[0, 0]
+                        bootstrapValues = episodeValues[0:settings.bootStrapCutOff]
+                        episodeValues = episodeValues[settings.bootStrapCutOff::]
+                        self.train(gameData[1], bootstrapValues, sess, settings.gamma, bootStrapValue)
                     elif gameData[0] == "EpisodeData":
                         print("{} is training!".format(self.name))
                         self.train(gameData[1], episodeValues, sess, settings.gamma)
@@ -78,6 +88,7 @@ class Worker:
                         summary.value.add(tag="Score", simple_value=gameData[1])
                         self.writer.add_summary(summary, episodeCount)
                         episodeInProgress = False
+                        episodeValues = []
                     else:
                         print("Invalid game data!")
                 episodeCount += 1

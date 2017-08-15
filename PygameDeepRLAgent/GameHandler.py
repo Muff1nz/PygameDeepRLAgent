@@ -8,15 +8,15 @@ class GameHandler:
         self.playerScore = 0
         self.episodeCount = 0
 
-    def update(self, episodeData):
+    def update(self, episodeData, bootStrapCounter, bootStrapCutOff):
         reset = False # So that all events get checked if terminal state
         while len(self.events):
             event = self.events.pop()
             if event[0] == "Player killed":
-                episodeData[event[1]][2] = -1
+                episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = -1
                 reset = True
             if event[0] == "Enemy killed":
-                episodeData[event[1]][2] = 1
+                episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = 1
                 self.playerScore += 1
         if reset:
             return False

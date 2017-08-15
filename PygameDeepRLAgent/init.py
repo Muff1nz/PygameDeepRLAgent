@@ -19,7 +19,9 @@ class Settings():
         if self.screenRes % self.downSampleFactor: # Downsampling will make an extra sample
             self.processedRes += 1
         self.gamma = 0.99
-        self.workerCount = 6
+        self.workerCount = 8
+        self.maxEpisodeLength = 300
+        self.bootStrapCutOff = 200
 
         self.tfGraphPath = 'C:/deepRLAgent/Agent/' + self.agentName + "_" + self.version
         self.tfCheckpoint = 2281716 # Check point to load, this gets set automatically when saving
