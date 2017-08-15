@@ -57,7 +57,10 @@ class physicsHandler():
             for enemy in GE.enemies:
                 if boxCollision(bullet, enemy):
                     enemy.kill()
-                    self.events.append(["Enemy killed", bullet.playerTimeStep])
+                    if self.settings.causalityTracking:
+                        self.events.append(["Enemy killed", bullet.playerTimeStep])
+                    else:
+                        self.events.append(["Enemy killed", playerTimeStep])
                 self.collisionChecks += 1
 
         # collisions for enemies

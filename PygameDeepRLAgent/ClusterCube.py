@@ -13,7 +13,7 @@ from world import World
 WHITE = 255, 255, 255
 class ClusterCube:
     def __init__(self, settings, gameDataQueue, playerActionQueue):
-        pygame.init()
+        pygame.display.init()
         self.settings = settings
         self.screen = pygame.display.set_mode([settings.screenRes, settings.screenRes])
 
@@ -70,7 +70,6 @@ class ClusterCube:
 
     def runGameLoop(self):
         if not self.episodeInProgress:
-            self.episodeData[len(self.episodeData)-1][2] = -1  # Assign reward of -1 because player lost
             self.gameDataQueue.put(["EpisodeData", self.episodeData])
             self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
             self.episodeData = []

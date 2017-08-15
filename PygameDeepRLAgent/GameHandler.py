@@ -13,7 +13,7 @@ class GameHandler:
         while len(self.events):
             event = self.events.pop()
             if event[0] == "Player killed":
-                episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = -1
+                episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = -5
                 reset = True
             if event[0] == "Enemy killed":
                 episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = 1

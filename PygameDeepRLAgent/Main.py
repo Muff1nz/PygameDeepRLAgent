@@ -7,6 +7,7 @@ from multiprocessing import Process, Queue
 from threading import Thread
 import tensorflow as tf
 import pygame
+import time
 
 from ACNetwork import ACNetwork
 from Worker import Worker
@@ -16,6 +17,7 @@ from ClusterCube import ClusterCube # The actual game
 def gameProcess(settings, gameDataQueue, playerActionQueue):
     game = ClusterCube(settings, gameDataQueue, playerActionQueue)
     while 1:
+        time.sleep(settings.sleepTime)
         game.runGameLoop()
 
 def workerThread(worker, settings, sess, coord, saver):
