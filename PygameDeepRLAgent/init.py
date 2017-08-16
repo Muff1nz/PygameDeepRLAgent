@@ -1,11 +1,11 @@
 class Settings():
     def __init__(self):
         # General settings:
-        self.version = "0.93_randomTesting2"
+        self.version = "0.95_OvernightTest"
         self.agentName = "A3C"
-        self.gpuMemoryFraction = 0.66
+        self.gpuMemoryFraction = 0.8
 
-        # Game settings
+        # Game settings:
         self.screenRes = 1024 # Screen is always a square
         self.gameSecond = 60 # Amount of frames considered a second in game
         self.fps = 6000 # Maximum fps for the game
@@ -37,3 +37,4 @@ class Settings():
         self.loadCheckpoint = True
         self.saveCheckpoint = True
         self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.agentName + "_" + self.version
+        self.gifPath = 'C:/deepRLAgent/gif/' + self.agentName + "_" + self.version

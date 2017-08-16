@@ -86,13 +86,14 @@ class ClusterCube:
         self.player.draw(self.screen)
         if self.settings.renderQuads:
             self.physics.quadTree.draw(self.screen)
-        pygame.display.flip()
+        if pygame.mouse.get_focused():
+            pygame.display.flip()
 
         if not self.gameCounter % self.settings.deepRLRate:
             # Put current frame on queue, so that worker agent can compute an action
             self.frameQueue.put(self.screen.copy())
 
-            # Send the already reward credited data + an extra frame to the worker,
+            # Send the already reward credited data to the worker,
             # so that he can use it to compute the value of the state and
             # Bootstrap the learning from the current knowledge.
             if self.settings.maxEpisodeLength <= len(self.episodeData):
@@ -100,9 +101,7 @@ class ClusterCube:
                 # as reward crediting is still in progress
                 bootStrapData = self.episodeData[0:self.settings.bootStrapCutOff]
                 self.episodeData = self.episodeData[self.settings.bootStrapCutOff::]
-                self.gameDataQueue.put(["Bootstrap",
-                                        bootStrapData,
-                                        self.episodeData[0][0]])
+                self.gameDataQueue.put(["Bootstrap", bootStrapData])
                 self.bootStrapCounter += 1
                 with self.processedFramesLock:
                     self.processedFrames = self.processedFrames[self.settings.bootStrapCutOff::]

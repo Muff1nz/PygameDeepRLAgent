@@ -14,8 +14,6 @@ class physicsHandler():
 
     # Checks for collisions between objects in game and resolves them
     def update(self, playerTimeStep):
-        if self.quadTree:
-            self.quadTree.clear()
         # Make quadTree
         playerBullets = []
         enemies = []
@@ -200,12 +198,6 @@ class QuadTree():
 
         GE = GameEntities(player, playerBullets, enemies, enemyBullets, walls)
         return GE
-
-    def clear(self):
-        for node in self.nodes:
-            if len(node.nodes):
-                node.clear()
-        self.nodes.clear()
 
     def draw(self, screen):
         if not len(self.nodes):
