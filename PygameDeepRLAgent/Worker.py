@@ -37,13 +37,10 @@ class Worker:
 
         # Update the global network using gradients from loss
         # Generate network statistics to periodically save
-        #rnnIn = self.localAC.stateInit
         feedDict = { self.localAC.targetV: discountedRewards,
                      self.localAC.processedFrame: frames,
                      self.localAC.actions: actions,
                      self.localAC.advantages: advantages,
-                     #self.localAC.stateIn[0]: rnnIn[0],
-                     #self.localAC.stateIn[1]: rnnIn[1]
                      }
         vl, pl, e, gn, vn, _ = sess.run([ self.localAC.valueLoss,
                                           self.localAC.policyLoss,
@@ -56,25 +53,17 @@ class Worker:
 
     def work(self, settings, gameDataQueue, playerActionQueue, sess, coord, saver):
         with sess.as_default(), sess.graph.as_default():
+            sess.run(self.updateLocalVars)
             while not coord.should_stop():
                 values = []
                 episodeInProgress = True
                 episodeCount = sess.run(self.localEpisodes)
-                sess.run(self.updateLocalVars)
-                #rnnState = self.localAC.stateInit
                 while episodeInProgress:
                     gameData = gameDataQueue.get()
                     if gameData[0] == "CurrentFrame":
                         frame = gameData[1]
-                        feedDict = {self.localAC.processedFrame: [frame],
-                                    #self.localAC.stateIn[0]: rnnState[0],
-                                    #self.localAC.stateIn[1]: rnnState[1]
-                                    }
-                        actionDist, value = sess.run([self.localAC.logits,
-                                                      self.localAC.value,
-                                                      #self.localAC.stateOut
-                                                      ],
-                                                      feed_dict=feedDict)
+                        feedDict = {self.localAC.processedFrame: [frame]}
+                        actionDist, value = sess.run([self.localAC.logits, self.localAC.value], feed_dict=feedDict)
                         action = np.random.choice(actionDist[0], p=actionDist[0])
                         action = np.argmax(actionDist==action)
 
@@ -89,19 +78,19 @@ class Worker:
                     elif gameData[0] == "EpisodeData":
                         print("{} is training!".format(self.name))
                         episodeData = np.array(gameData[1])
+                        sess.run(self.updateLocalVars)
                         vl, pl, e, gn, vn = self.train(episodeData, values, sess, settings.gamma)
                         score = gameDataQueue.get()[1]
-
-                        summary = tf.Summary()
-                        summary.value.add(tag="Performance/Score", simple_value=score)
-                        summary.value.add(tag='Losses/Value Loss', simple_value=float(vl))
-                        summary.value.add(tag='Losses/Policy Loss', simple_value=float(pl))
-                        summary.value.add(tag='Losses/Entropy', simple_value=float(e))
-                        summary.value.add(tag='Losses/Grad Norm', simple_value=float(gn))
-                        summary.value.add(tag='Losses/Var Norm', simple_value=float(vn))
-                        self.writer.add_summary(summary, episodeCount)
-                        self.writer.flush()
-
+                        if not episodeCount % 5:
+                            summary = tf.Summary()
+                            summary.value.add(tag="Performance/Score", simple_value=score)
+                            summary.value.add(tag='Losses/Value Loss', simple_value=float(vl))
+                            summary.value.add(tag='Losses/Policy Loss', simple_value=float(pl))
+                            summary.value.add(tag='Losses/Entropy', simple_value=float(e))
+                            summary.value.add(tag='Losses/Grad Norm', simple_value=float(gn))
+                            summary.value.add(tag='Losses/Var Norm', simple_value=float(vn))
+                            self.writer.add_summary(summary, episodeCount)
+                            self.writer.flush()
                         episodeInProgress = False
                         values = []
                         if self.number == 0:

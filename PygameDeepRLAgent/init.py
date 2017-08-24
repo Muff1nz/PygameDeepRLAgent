@@ -3,7 +3,7 @@ class Settings():
         # General settings:
         self.version = "0.97"
         self.agentName = "A3C"
-        self.activity = "testingA3CBootcamp"
+        self.activity = "testingA3CNewGameDesign"
         self.gpuMemoryFraction = 0.66
 
         # Game settings:
@@ -23,20 +23,30 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
+
+        # Hyper parameters:
         self.actionSize = 4
+        self.gamma = 0.99
+        self.workerCount = 8
+        self.maxEpisodeLength = 300
+        self.bootStrapCutOff = 200
+        self.learningRate = 1e-5
+        self.entropyWeight = 0.01
+        self.valueWeight = 0.5
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
         self.downSampleFactor = 64
         self.processedRes = self.screenRes // (self.screenRes // self.downSampleFactor)
         if self.screenRes % self.downSampleFactor: # Downsampling will make an extra sample
             self.processedRes += 1
-        self.gamma = 0.99
-        self.workerCount = 8
-        self.maxEpisodeLength = 300
-        self.bootStrapCutOff = 200
+
 
         self.tfGraphPath = 'C:/deepRLAgent/Agent/' + self.activity + "_" + self.agentName + "_" + self.version
-        self.tfCheckpoint = 'C:/deepRLAgent/Agent/testingA3CBootcamp_A3C_0.97A3C-2697' # Check point to load
+        self.tfCheckpoint = 'C:/deepRLAgent/Agent/testingA3CNewGameDesign_A3C_0.97A3C-1430' # Check point to load
         self.loadCheckpoint = True
         self.saveCheckpoint = True
         self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.activity + "/" + self.agentName + "_" + self.version
         self.gifPath = 'C:/deepRLAgent/gif/' + self.agentName + "_" + self.version
+
+    def loadFromFile(self, fileName):
+        with open(fileName, 'r') as file:
+            pass

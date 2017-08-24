@@ -3,24 +3,38 @@ import numpy as np
 from A3CBootcampGame.Actor import Actor
 
 class FoodHandler:
-    def __init__(self, settings):
+    def __init__(self, settings, player):
         self.settings = settings
-        self.food = []
+        self.player = player
+        self.food = [Food(settings, [0, 0], "./Assets/Food.png")]
         self.foodSpawnRate = 30
-        self.spawnSize = settings.screenRes - 100
+        self.spawnSize = settings.screenRes
+        self.rng = random.Random()
 
     def update(self, timeStep):
-        if not timeStep % self.foodSpawnRate:
+        if not self.food[0].active:
             self.spawnFood()
 
+    def randomPos(self):
+        pos = np.array([self.rng.random() * (self.spawnSize - 200) + 100,
+                        self.rng.random() * (self.spawnSize - 200) + 100])
+        return pos
+
     def spawnFood(self):
-        pos = np.array([random.random()*self.spawnSize,
-                        random.random()*self.spawnSize])
-        for foodBit in self.food:
-            if not foodBit.active:
-                foodBit.spawn(pos)
-                return
-        self.food.append(Food(self.settings, pos, "./Assets/Food.png"))
+        food = self.food[0]
+        while True:
+            pos = self.randomPos()
+            food.spawn(pos)
+            if not self.boxCollision(food, self.player):
+                break
+
+    def boxCollision(self, box1, box2):
+        if (box1.pos[1] + box1.size <= box2.pos[1] or
+            box1.pos[1] >= box2.pos[1] + box2.size or
+            box1.pos[0] + box1.size <= box2.pos[0] or
+            box1.pos[0] >= box2.pos[0] + box2.size):
+            return False
+        return True
 
     def draw(self, screen):
         for foodBit in self.food:

@@ -19,7 +19,7 @@ def gameProcess(settings, gameDataQueue, playerActionQueue):
     game = A3CBootCamp(settings, gameDataQueue, playerActionQueue)
     while 1:
         game.runGameLoop()
-        time.sleep(settings.sleepTime)
+        #time.sleep(settings.sleepTime)
 
 def workerThread(worker, settings, sess, coord, saver):
     gameDataQueue, playerActionQueue = Queue(), Queue()
@@ -30,10 +30,13 @@ def workerThread(worker, settings, sess, coord, saver):
 
 def main():
     settings = Settings()
+    writer = tf.summary.FileWriter(settings.tbPath)
     globalNetwork = ACNetwork(settings, "global")
     workers = []
     for i in range(settings.workerCount):
         workers.append(Worker(settings, i))
+    writer.add_graph(tf.get_default_graph())
+    writer.flush()
     saver = tf.train.Saver(max_to_keep=10, keep_checkpoint_every_n_hours=1)
 
     workerThreads = []

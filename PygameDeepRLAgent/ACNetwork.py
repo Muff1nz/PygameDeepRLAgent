@@ -12,84 +12,69 @@ class ACNetwork:
                 activation_fn=tf.nn.elu,
                 inputs=self.input,
                 num_outputs=16,
-                kernel_size=[8, 8],
-                stride=[4, 4],
-                padding='VALID'
+                kernel_size=[16, 16],
+                stride=[2, 2],
+                scope="conv1"
             )
             self.conv2 = slim.conv2d(
                 activation_fn=tf.nn.elu,
                 inputs=self.conv1,
                 num_outputs=32,
+                kernel_size=[8, 8],
+                stride=[2, 2],
+                scope="conv2"
+            )
+            self.conv3 = slim.conv2d(
+                activation_fn=tf.nn.elu,
+                inputs=self.conv2,
+                num_outputs=64,
                 kernel_size=[4, 4],
                 stride=[2, 2],
-                padding='VALID'
+                scope="conv3"
             )
-            hidden = slim.fully_connected(slim.flatten(self.conv2), 256,
-                                          activation_fn=tf.nn.elu,
-                                          weights_initializer=self.weightInit(0.01),
-                                          biases_initializer=tf.constant_initializer(0)
-            )
-            '''
-            lstmCell = tf.contrib.rnn.BasicLSTMCell(256, state_is_tuple=True)
-            cInit = np.zeros(shape=(1, lstmCell.state_size.c), dtype=np.float32)
-            hInit = np.zeros(shape=(1, lstmCell.state_size.h), dtype=np.float32)
-            self.stateInit = [cInit, hInit]
-            cIn = tf.placeholder(shape=[1, lstmCell.state_size.c], dtype=tf.float32, name="cIn")
-            hIn = tf.placeholder(shape=[1, lstmCell.state_size.h], dtype=tf.float32, name="hIn")
-            self.stateIn = [cIn, hIn]
-            rnnIn = tf.expand_dims(hidden, [0])
-            stepSize = tf.shape(self.input)[:1]
-            stateIn = tf.contrib.rnn.LSTMStateTuple(cIn, hIn)
-            lstmOutputs, lstmState = tf.nn.dynamic_rnn(
-                lstmCell,
-                rnnIn,
-                initial_state=stateIn,
-                sequence_length=stepSize,
-                time_major=False
-            )
-            lstmC, lstmH = lstmState
-            self.stateOut = [lstmC[:1, :], lstmH[:1, :]]
-            rnnOut = tf.reshape(lstmOutputs, [-1, 256])
-            '''
-            self.policy = slim.fully_connected(
-                hidden, settings.actionSize,
-                activation_fn=None,
-                weights_initializer=self.weightInit(0.01),
-                biases_initializer=tf.constant_initializer(0)
-            )
-            self.value = slim.fully_connected(
-                hidden, 1,
-                activation_fn=None,
-                weights_initializer=self.weightInit(1.0),
-                biases_initializer=tf.constant_initializer(0)
-            )
+            hidden = slim.fully_connected(slim.flatten(self.conv3), 1024,activation_fn=tf.nn.elu, scope="fc1")
+            hidden2 = slim.fully_connected(hidden, 1024, activation_fn=tf.nn.elu, scope="fc2")
+            p0 = slim.fully_connected(hidden2, 512, activation_fn=tf.nn.elu, scope="p0")
+            v0 = slim.fully_connected(hidden2, 512, activation_fn=tf.nn.elu, scope="v0")
+            self.value = slim.fully_connected(v0, 1,
+                                              activation_fn=None,
+                                              weights_initializer=self.weightInit(1.0),
+                                              scope="vOut")
+            self.policy = slim.fully_connected(p0, settings.actionSize,
+                                               activation_fn=None,
+                                               weights_initializer=self.weightInit(0.01),
+                                               scope="p1")
 
-            self.logits = tf.nn.softmax(self.policy)
-            self.logLogits = tf.nn.log_softmax(self.policy)
+            with tf.variable_scope("pOut"):
+                self.logits = tf.nn.softmax(self.policy)
+                self.logLogits = tf.nn.log_softmax(self.policy)
 
             if scope != 'global':
-                self.actions = tf.placeholder(shape=[None], dtype=tf.int32, name="actions")
-                self.actionsOnehot = tf.one_hot(self.actions, settings.actionSize, dtype=tf.float32)
-                self.targetV = tf.placeholder(shape=[None], dtype=tf.float32, name="targetV")
-                self.advantages = tf.placeholder(shape=[None], dtype=tf.float32, name="advantages")
+                with tf.variable_scope("training"):
+                    self.actions = tf.placeholder(shape=[None], dtype=tf.int32, name="actions")
+                    self.actionsOnehot = tf.one_hot(self.actions, settings.actionSize, dtype=tf.float32)
+                    self.targetV = tf.placeholder(shape=[None], dtype=tf.float32, name="targetV")
+                    self.advantages = tf.placeholder(shape=[None], dtype=tf.float32, name="advantages")
 
-                # Loss functions
-                self.valueLoss = 0.5 * tf.reduce_sum(tf.square(self.targetV - tf.reshape(self.value, [-1])))
-                self.entropy = -tf.reduce_sum(self.logits * self.logLogits)
-                self.policyLoss = -tf.reduce_sum(tf.reduce_sum(self.logLogits * self.actionsOnehot, [1]) * self.advantages)
-                self.loss = 0.5 * self.valueLoss + self.policyLoss - self.entropy * 0.01
+                    # Loss functions
+                    self.valueLoss = 0.5 * tf.reduce_sum(tf.square(self.targetV - tf.reshape(self.value, [-1])))
+                    self.entropy = tf.reduce_sum(tf.multiply(self.logits, -self.logLogits))
+                    self.policyLoss = -tf.reduce_sum(tf.reduce_sum(self.logLogits * self.actionsOnehot, [1]) * self.advantages)
+                    self.loss = (settings.valueWeight * self.valueLoss +
+                                 self.policyLoss -
+                                 self.entropy * settings.entropyWeight)
 
-                # Get gradients from local network using local losses
-                localVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
-                self.gradients = tf.gradients(self.loss, localVars)
-                self.varNorms = tf.global_norm(localVars)
-                grads, self.gradNorms = tf.clip_by_global_norm(self.gradients, 40)
+                    # Get gradients from local network using local losses
+                    localVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
+                    self.gradients = tf.gradients(self.loss, localVars)
+                    self.varNorms = tf.global_norm(localVars)
+                    self.grads, self.gradNorms = tf.clip_by_global_norm(self.gradients, 40)
 
-                optimizer = tf.train.AdamOptimizer(1e-4)
+                    optimizer = tf.train.AdamOptimizer(settings.learningRate)
 
-                # Apply local gradients to global network
-                globalVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
-                self.applyGradsGlobal = optimizer.apply_gradients(zip(grads, globalVars), global_step=step)
+                    # Apply local gradients to global network
+                    globalVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
+                    self.applyGradsGlobal = optimizer.apply_gradients(zip(self.grads, globalVars), global_step=step)
 
     def weightInit(self, std=1.0):
         def _initializer(shape, dtype=None, partition_info=None):

@@ -36,8 +36,8 @@ class A3CBootCamp:
         self.playerTimeStep = -1
 
         self.world = World(settings)
-        self.foodHandler = FoodHandler(settings)
         self.player = Player(settings, "./Assets/Player.png")
+        self.foodHandler = FoodHandler(settings, self.player)
         self.physics = physicsHandler(self.world, self.player, self.foodHandler, self.settings)
         self.gameHandler = GameHandler(self.physics.events, self.player, self.foodHandler, self.episodeData)
 
