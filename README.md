@@ -1,8 +1,7 @@
 # PygameDeepRLAgent
+This project is about training deepRL agents at varius tasks made with pygame. Currently using an A3C agent.
 
-# Sources
-A3C in DOOM:
-https://github.com/awjuliani/DeepRL-Agents/blob/master/A3C-Doom.ipynb
+# Results
+![alt text](https://user-images.githubusercontent.com/29259118/29706944-cc96acae-8983-11e7-9b85-ffa41f7a8fae.PNG)
 
-A3C Agents:
-https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-8-asynchronous-actor-critic-agents-a3c-c88f72a5e9f2
+The above image shows score per episode for 8 workers during their 1 day and 20 hour training session
