@@ -3,20 +3,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import time
 from multiprocessing import Process, Queue
 from threading import Thread
 
 import tensorflow as tf
+import time
 
+from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
+from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
 from ACNetwork import ACNetwork
-from A3CBootcampGame.A3CBootCamp import A3CBootCamp
 from Worker import Worker
 from init import Settings
 
 
 def gameProcess(settings, gameDataQueue, playerActionQueue):
-    game = A3CBootCamp(settings, gameDataQueue, playerActionQueue)
+    game = ShootingGrounds(settings, gameDataQueue, playerActionQueue)
     while 1:
         game.runGameLoop()
         #time.sleep(settings.sleepTime)

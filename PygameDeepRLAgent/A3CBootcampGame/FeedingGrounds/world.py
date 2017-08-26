@@ -5,7 +5,7 @@ BLACK = 0, 0, 0
 
 class World:
     def __init__(self, settings):
-        res = settings.screenRes
+        res = settings.gameRes
 
         self.walls = []
 
@@ -38,4 +38,4 @@ class Line:
                 self.line = lambda x, y: end[1] - y
 
     def draw(self, screen):
-        pygame.draw.line(screen, self.clr, self.start, self.end, 50)
+        pygame.draw.line(screen, self.clr, self.start, self.end, 4)

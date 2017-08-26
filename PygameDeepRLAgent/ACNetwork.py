@@ -5,9 +5,9 @@ import numpy as np
 class ACNetwork:
     def __init__(self, settings, scope, step=0):
         with tf.variable_scope(scope):
-            self.processedFrame = tf.placeholder(shape=[None, settings.processedRes, settings.processedRes],
-                                                 dtype=tf.float32, name="processedFrame")
-            self.input = tf.reshape(self.processedFrame, shape=[-1, settings.processedRes, settings.processedRes, 1])
+            self.frame = tf.placeholder(shape=[None, settings.gameRes, settings.gameRes],
+                                        dtype=tf.float32, name="frame")
+            self.input = tf.reshape(self.frame, shape=[-1, settings.gameRes, settings.gameRes, 1])
             self.conv1 = slim.conv2d(
                 activation_fn=tf.nn.elu,
                 inputs=self.input,

@@ -2,15 +2,14 @@ import numpy as np
 import pygame
 
 class Actor:
-    def __init__(self, settings, spritePath):
+    def __init__(self, settings, spritePath, size):
         self.type = "not set"
         self.settings = settings
 
         #Physical attributes
-        self.pos = np.array([settings.screenRes / 2, settings.screenRes / 5])
+        self.pos = np.array([settings.gameRes / 2, settings.gameRes / 2])
         self.oldPos = self.pos.copy()
-        self.speed = 10
-        self.size = settings.screenRes // 10
+        self.size = int(settings.gameRes * size)
         # needed for collision checking
         self.vertices = []
         self.vertices.append(np.array([0, 0]))

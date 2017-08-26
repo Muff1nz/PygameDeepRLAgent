@@ -1,31 +1,34 @@
 import random
+
 import numpy as np
+
 from A3CBootcampGame.Actor import Actor
 
-class FoodHandler:
+
+class TargetHandler:
     def __init__(self, settings, player):
         self.settings = settings
         self.player = player
-        self.food = [Food(settings, [0, 0], "./Assets/Food.png")]
+        self.target = Target(settings, [0,0], "./Assets/Enemy.png")
         self.foodSpawnRate = 30
-        self.spawnSize = settings.screenRes
+        self.spawnRange = [settings.gameRes*0.1, settings.gameRes*0.9]
         self.rng = random.Random()
+        self.spawnTarget()
 
     def update(self, timeStep):
-        if not self.food[0].active:
-            self.spawnFood()
+        if not self.target.active:
+            self.spawnTarget()
 
     def randomPos(self):
-        pos = np.array([self.rng.random() * (self.spawnSize - 200) + 100,
-                        self.rng.random() * (self.spawnSize - 200) + 100])
+        pos = np.array([self.rng.randrange(self.spawnRange[0], self.spawnRange[1]),
+                        self.rng.randrange(self.spawnRange[0], self.spawnRange[1])])
         return pos
 
-    def spawnFood(self):
-        food = self.food[0]
+    def spawnTarget(self):
         while True:
             pos = self.randomPos()
-            food.spawn(pos)
-            if not self.boxCollision(food, self.player):
+            self.target.spawn(pos)
+            if not self.boxCollision(self.target, self.player):
                 break
 
     def boxCollision(self, box1, box2):
@@ -37,17 +40,15 @@ class FoodHandler:
         return True
 
     def draw(self, screen):
-        for foodBit in self.food:
-            if foodBit.active:
-                foodBit.draw(screen)
+        self.target.draw(screen)
 
     def reset(self):
-        for foodBit in self.food:
-            foodBit.active = False
+        self.target.active = False
 
-class Food(Actor):
+class Target(Actor):
     def __init__(self, settings, pos, spritePath):
-        super(Food, self).__init__(settings, spritePath)
+        super(Target, self).__init__(settings, spritePath, 0.1)
+        self.type = "target"
         self.active = True
         self.pos = pos
 
@@ -55,7 +56,7 @@ class Food(Actor):
         self.pos = pos
         self.active = True
 
-    def playerCollision(self):
+    def playerBulletCollision(self):
         self.active = False
 
     def draw(self, screen):

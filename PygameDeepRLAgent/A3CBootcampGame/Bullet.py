@@ -1,31 +1,19 @@
 import numpy as np
-import pygame
 
-class Bullet:
+from A3CBootcampGame.Actor import Actor
+
+class Bullet(Actor):
     def __init__(self, settings, sprite):
-        self.settings = settings
-
+        super(Bullet, self).__init__(settings, sprite, 0.05)
         self.type = "bullet"
 
-        self.pos = np.array([0, 0])
-        self.oldPos = self.pos.copy()
         self.dir = np.array([0, 0])
-        self.speed = 15
+        self.speed = settings.gameRes * 0.02
         self.timer = 0
         self.TTL = 3 #time to live in seconds
 
-        self.size = settings.screenRes // 40
-        self.sprite = pygame.image.load(sprite)
-        self.sprite = pygame.transform.scale(self.sprite, (self.size, self.size))
-
-        self.vertices = []
-        self.vertices.append(np.array([0, 0]))
-        self.vertices.append(np.array([0, self.size]))
-        self.vertices.append(np.array([self.size, 0]))
-        self.vertices.append(np.array([self.size, self.size]))
-        self.active = False
-
         self.playerTimeStep = -1
+        self.active = False
 
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)
@@ -44,4 +32,7 @@ class Bullet:
             self.pos += self.dir * self.speed
             if self.timer >= self.TTL * self.settings.gameSecond:
                 self.active = False
+
+    def wallCollision(self):
+        self.active = False
 

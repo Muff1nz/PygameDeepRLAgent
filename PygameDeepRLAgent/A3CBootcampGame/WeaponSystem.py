@@ -1,4 +1,4 @@
-from ClusterCubeGame import Bullet
+from A3CBootcampGame.Bullet import Bullet
 
 
 class WeaponSystem:
@@ -9,7 +9,7 @@ class WeaponSystem:
         self.bulletCount = 50
         self.bullets = []
         for i in range(self.bulletCount):
-            self.bullets.append(Bullet.Bullet(settings, sprite))
+            self.bullets.append(Bullet(settings, sprite))
         self.nextBullet = 0
         self.fireRate = 0.5
         self.timer = 0
@@ -20,10 +20,10 @@ class WeaponSystem:
             self.nextBullet = ((self.nextBullet + 1) % self.bulletCount)
             self.timer = 0
 
-    def draw(self, n):
+    def draw(self, screen):
         for bullet in self.bullets:
             if bullet.active:
-                bullet.draw(n)
+                bullet.draw(screen)
 
     def update(self):
         self.active = False
