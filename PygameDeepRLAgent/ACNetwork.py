@@ -70,7 +70,11 @@ class ACNetwork:
                     self.varNorms = tf.global_norm(localVars)
                     self.grads, self.gradNorms = tf.clip_by_global_norm(self.gradients, 40)
 
-                    optimizer = tf.train.AdamOptimizer(settings.learningRate)
+                    self.lr = tf.train.exponential_decay(settings.learningRate,
+                                                         step,
+                                                         settings.lrDecayStep,
+                                                         settings.lrDecayRate)
+                    optimizer = tf.train.AdamOptimizer(self.lr)
 
                     # Apply local gradients to global network
                     globalVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')

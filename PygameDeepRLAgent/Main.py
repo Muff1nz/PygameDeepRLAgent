@@ -38,7 +38,7 @@ def main():
         workers.append(Worker(settings, i))
     writer.add_graph(tf.get_default_graph())
     writer.flush()
-    saver = tf.train.Saver(max_to_keep=10, keep_checkpoint_every_n_hours=1)
+    saver = tf.train.Saver(max_to_keep=2, keep_checkpoint_every_n_hours=1)
 
     workerThreads = []
     config = tf.ConfigProto()

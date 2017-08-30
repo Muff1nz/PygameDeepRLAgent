@@ -3,7 +3,7 @@ class Settings():
         # General settings:
         self.version = "0.99"
         self.agentName = "A3C"
-        self.activity = "shootingGrounds"
+        self.activity = "shootingGroundsDecayingLr3"
         self.gpuMemoryFraction = 0.66
 
         # Game settings:
@@ -28,20 +28,22 @@ class Settings():
         self.gameRes = 80
         self.actionSize = 9
         self.gamma = 0.99
-        self.workerCount = 8
+        self.workerCount = 1
         self.maxEpisodeLength = 300
         self.bootStrapCutOff = 200
-        self.learningRate = 1e-5
+        self.learningRate = 1e-4
+        self.lrDecayRate = 0.95
+        self.lrDecayStep = 100
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
-        self.loadCheckpoint = False
-        self.saveCheckpoint = True
-        self.logSummaries = True
-        self.train = True
+        self.loadCheckpoint = True
+        self.saveCheckpoint = False
+        self.logSummaries = False
+        self.train = False
         self.tfGraphPath = 'C:/deepRLAgent/Agent/' + self.activity + "_" + self.agentName + "_" + self.version
-        self.tfCheckpoint = 'C:/deepRLAgent/Agent/testingPerformanceImprovements_A3C_0.99A3C-240'  # Check point to load
+        self.tfCheckpoint = 'C:/deepRLAgent/Agent/shootingGroundsDecayingLr3_A3C_0.99A3C-1201'  # Check point to load
         self.tbPath = 'C:/deepRLAgent/tensorboard/' + self.activity + "/" + self.agentName + "_" + self.version
         self.gifPath = 'C:/deepRLAgent/gif/' + self.agentName + "_" + self.version
 

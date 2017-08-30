@@ -98,6 +98,8 @@ class Worker:
                                 summary.value.add(tag='Losses/Entropy', simple_value=float(e))
                                 summary.value.add(tag='Losses/Grad Norm', simple_value=float(gn))
                                 summary.value.add(tag='Losses/Var Norm', simple_value=float(vn))
+                                summary.value.add(tag='Losses/Learning rate',
+                                                  simple_value=float(sess.run(self.localAC.lr)))
                                 self.writer.add_summary(summary, episodeCount)
                                 self.writer.flush()
                             # Save model and make a gif, if you're worker 0
