@@ -24,7 +24,7 @@ https://www.youtube.com/watch?v=fEKITU7cjNg&feature=youtu.be
 
 # Causality tracking
 
-Causality tracking is a system in this project that tries to solve the credit assignment problem. Causality tracking assigns rewards to the action state pair that caused the reward. In practice this means that the game keeps track of at which time step all bullets are fired, and when a bullet hits something, the reward is credited to the (action, state) tuple from which the bullet was fired instead of the most current (action, state) tuple. 
+Causality tracking is a system in this project that tries to solve the credit assignment problem. Causality tracking assigns rewards to the (action, state) tuple that caused the reward. In practice this means that the game keeps track of at which time step all bullets are fired, and when a bullet hits something, the reward is credited to the (action, state) tuple from which the bullet was fired instead of the most current (action, state) tuple. 
 
 ![shootinggroundscttestlr](https://user-images.githubusercontent.com/29259118/30173301-7b984622-93f7-11e7-9612-3c1df33d79de.PNG)
 
