@@ -105,13 +105,17 @@ class Worker:
                             # Save model and make a gif, if you're worker 0
                             if self.number == 0:
                                 print(sess.run(self.localEpisodes))
-                                if not episodeCount % 100:
+                                if not episodeCount % 500 and episodeCount > 0:
                                     print("worker0 is saving the tf graph!")
                                     if settings.saveCheckpoint:
                                         saver.save(sess, settings.tfGraphPath + settings.agentName, self.localEpisodes)
                                     if settings.logSummaries:
                                         print("Worker0 saving a gif!")
                                         makeGifs(episodeData, episodeCount, settings)
+                                if episodeCount > settings.trainingEpisodes:
+                                    print("Training finished, saving and quitting program!".format(self.name))
+                                    saver.save(sess, settings.tfGraphPath + settings.agentName, self.localEpisodes)
+                                    coord.request_stop()
                         else:
                             gameDataQueue.get()
 
@@ -124,6 +128,8 @@ class Worker:
                         print("Invalid game data! got: {}".format(gameData[0]))
                 episodeCount += 1
             print("{} is quitting!".format(self.name))
+
+
 
 def makeGifs(episodeData, episodeCount, settings):
     plusRewardIndex = -1
@@ -140,8 +146,8 @@ def makeGifs(episodeData, episodeCount, settings):
     frames = episodeData[:, 0]
     frames = np.asarray(frames.tolist())
     if plusRewardIndex != -1:
-        imageio.mimsave(settings.gifPath + "_plus_" + str(episodeCount) + ".gif",
+        imageio.mimsave(settings.gifPath + "_plus_" + settings.activity + "_" + str(episodeCount) + ".gif",
                         frames[(plusRewardIndex - giflen):(plusRewardIndex + giflen)])
     if minusRewardIndex != -1:
-        imageio.mimsave(settings.gifPath + "_minus_" + str(episodeCount) + ".gif",
+        imageio.mimsave(settings.gifPath + "_minus_" + settings.activity + "_" + str(episodeCount) + ".gif",
                         frames[(minusRewardIndex - giflen):(minusRewardIndex + giflen)])

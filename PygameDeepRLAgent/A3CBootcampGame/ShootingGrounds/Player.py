@@ -28,6 +28,7 @@ class Player(Actor):
 
     def reset(self):
         self.pos = np.array([self.settings.gameRes / 2, self.settings.gameRes / 2])
+        self.ws.reset()
 
 
 

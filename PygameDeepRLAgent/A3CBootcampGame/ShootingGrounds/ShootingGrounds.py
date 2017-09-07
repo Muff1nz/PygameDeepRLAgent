@@ -33,7 +33,7 @@ class ShootingGrounds:
         self.player = Player(settings, "./Assets/Player.png")
         self.targetHandler = TargetHandler(settings, self.player)
         self.physics = physicsHandler(self.world, self.player, self.targetHandler, self.settings)
-        self.gameHandler = GameHandler(self.physics.events, self.player, self.targetHandler)
+        self.gameHandler = GameHandler(self.player, self.targetHandler)
 
     def runGameLoop(self):
         if not self.episodeInProgress:
@@ -59,7 +59,6 @@ class ShootingGrounds:
             montiroFrame = pygame.transform.scale(self.gameScreen.copy(),
                                                  (self.settings.screenRes, self.settings.screenRes))
             self.screen.blit(montiroFrame, montiroFrame.get_rect())
-            #self.screen.blit(self.gameScreen, self.gameScreen.get_rect())
             pygame.display.flip()
 
         if not self.gameCounter % self.settings.deepRLRate:
@@ -73,11 +72,10 @@ class ShootingGrounds:
             self.episodeData.append([frame, self.playerAction, 0])
 
         # Update stuff
-        #self.enemyHandler.update()
         self.player.update(self.playerAction, self.playerTimeStep)
         self.physics.update(self.playerTimeStep)
         self.targetHandler.update(self.gameCounter)
-        self.episodeInProgress = self.gameHandler.update(self.gameCounter, self.episodeData)
+        self.episodeInProgress = self.gameHandler.update(self.physics.events, self.gameCounter, self.episodeData)
 
         # Check events
         for event in pygame.event.get():

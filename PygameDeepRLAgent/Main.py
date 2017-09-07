@@ -5,6 +5,7 @@ from __future__ import print_function
 
 from multiprocessing import Process, Queue
 from threading import Thread
+import os
 
 import tensorflow as tf
 import time
@@ -30,17 +31,19 @@ def workerThread(worker, settings, sess, coord, saver):
     game.terminate()
 
 def main():
+
     settings = Settings()
     writer = tf.summary.FileWriter(settings.tbPath)
     globalNetwork = ACNetwork(settings, "global")
     workers = []
     for i in range(settings.workerCount):
         workers.append(Worker(settings, i))
-    writer.add_graph(tf.get_default_graph())
-    writer.flush()
+    #writer.add_graph(tf.get_default_graph())
+    #writer.flush()
     saver = tf.train.Saver(max_to_keep=2, keep_checkpoint_every_n_hours=1)
 
     workerThreads = []
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
     with tf.Session(config=config) as sess:
