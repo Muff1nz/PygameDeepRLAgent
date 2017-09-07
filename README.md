@@ -14,9 +14,10 @@ The agent was trained using a i7 6700k and a GTX 1080 ti
 The above gif shows a sequence of the game, the way the agent sees it.
 
 ## ShootingGrounds
+![a3cshootinggroundslr](https://user-images.githubusercontent.com/29259118/30173297-77c11ccc-93f7-11e7-87f6-fc83e60e3070.PNG)
 ![a3cshootinggroundsscore](https://user-images.githubusercontent.com/29259118/29883477-beb05af0-8db0-11e7-8080-269f952695ac.PNG)
 
-The above image shows the score per episode of 8 A3C worker agents during their almost 18 hour training session in the ShootingGrounds level of A3CBootcamp. The agents control a blue square with the ability to shoot, and it has to shoot the read squares. Shooting a red square rewards the agent with 1 point. The agent needs to shoot as many red squares as possible within the time limit to get the most points.
+The above images shows the score and learning rate per episode of 8 A3C worker agents during their almost 18 hour training session in the ShootingGrounds level of A3CBootcamp. The agents control a blue square with the ability to shoot, and it has to shoot the read squares. Shooting a red square rewards the agent with 1 point. The agent needs to shoot as many red squares as possible within the time limit to get the most points.
 
 Youtube video of agent progress in ShootingGrounds:
 https://www.youtube.com/watch?v=fEKITU7cjNg&feature=youtu.be
