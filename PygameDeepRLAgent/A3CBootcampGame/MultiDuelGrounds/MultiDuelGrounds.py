@@ -7,16 +7,15 @@ from queue import Queue
 
 import numpy as np
 import pygame
-from A3CBootcampGame.FeedingGrounds.Food import FoodHandler
-from A3CBootcampGame.FeedingGrounds.GameHandler import GameHandler
-from A3CBootcampGame.FeedingGrounds.Player import Player
-from A3CBootcampGame.FeedingGrounds.world import World
-
-from A3CBootcampGame.FeedingGrounds.physics import physicsHandler
+from A3CBootcampGame.MultiDuelGrounds.Enemy import EnemyHandler
+from A3CBootcampGame.MultiDuelGrounds.GameHandler import GameHandler
+from A3CBootcampGame.MultiDuelGrounds.Player import Player
+from A3CBootcampGame.MultiDuelGrounds.world import World
+from A3CBootcampGame.MultiDuelGrounds.physics import physicsHandler
 
 WHITE = 255, 255, 255
-# Class for the feeding grounds level in A3CBootCamp
-class FeedingGrounds:
+# Class for the shooting grounds level in A3CBootCamp
+class MultiDuelGrounds:
     def __init__(self, settings, gameDataQueue, playerActionQueue):
         pygame.display.init()
         self.settings = settings
@@ -33,12 +32,13 @@ class FeedingGrounds:
         self.playerActionQueue = playerActionQueue
         self.playerAction = 0
         self.playerTimeStep = -1
+        self.bootStrapCounter = 0
 
         self.world = World(settings)
         self.player = Player(settings, "./Assets/Player.png")
-        self.foodHandler = FoodHandler(settings, self.player)
-        self.physics = physicsHandler(self.world, self.player, self.foodHandler, self.settings)
-        self.gameHandler = GameHandler(self.physics.events, self.player, self.foodHandler)
+        self.enemyHandler = EnemyHandler(settings)
+        self.physics = physicsHandler(self.world, self.player, self.enemyHandler.enemies, self.settings)
+        self.gameHandler = GameHandler(self.player, self.enemyHandler)
 
     def runGameLoop(self):
         if not self.episodeInProgress:
@@ -56,7 +56,7 @@ class FeedingGrounds:
         # Render stuff
         self.gameScreen.fill(WHITE)
         self.world.draw(self.gameScreen)
-        self.foodHandler.draw(self.gameScreen)
+        self.enemyHandler.draw(self.gameScreen)
         self.player.draw(self.gameScreen)
         if self.settings.renderQuads:
             self.physics.quadTree.draw(self.gameScreen)
@@ -69,6 +69,20 @@ class FeedingGrounds:
         if not self.gameCounter % self.settings.deepRLRate:
             frame = pygame.surfarray.array3d(self.gameScreen.copy())
             frame = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
+
+            # Send the already reward credited data + an extra frame to the worker,
+            # so that he can use it to compute the value of the state and
+            # Bootstrap the learning from the current knowledge.
+            if self.settings.maxEpisodeLength <= len(self.episodeData):
+                # Due to causality tracking, we cant bootstrap from recent frames,
+                # as reward crediting is still in progress
+                bootStrapData = self.episodeData[0:self.settings.bootStrapCutOff]
+                self.episodeData = self.episodeData[self.settings.bootStrapCutOff::]
+                self.gameDataQueue.put(["Bootstrap",
+                                        bootStrapData,
+                                        self.episodeData[0][0]])
+                self.bootStrapCounter += 1
+
             # Send frame to agent
             self.gameDataQueue.put(["CurrentFrame", frame])
             self.playerAction = self.playerActionQueue.get()
@@ -77,10 +91,13 @@ class FeedingGrounds:
             self.episodeData.append([frame, self.playerAction, 0])
 
         # Update stuff
-        self.player.update(self.playerAction)
+        self.player.update(self.playerAction, self.playerTimeStep)
         self.physics.update(self.playerTimeStep)
-        self.foodHandler.update(self.gameCounter)
-        self.episodeInProgress = self.gameHandler.update(self.gameCounter, self.episodeData)
+        self.enemyHandler.update()
+        self.episodeInProgress = self.gameHandler.update(self.physics.events,
+                                                         self.episodeData,
+                                                         self.bootStrapCounter,
+                                                         self.settings.bootStrapCutOff)
 
         # Check events
         for event in pygame.event.get():

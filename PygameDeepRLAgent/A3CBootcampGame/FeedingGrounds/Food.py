@@ -9,13 +9,13 @@ class FoodHandler:
     def __init__(self, settings, player):
         self.settings = settings
         self.player = player
-        self.food = [Food(settings, [0, 0], "./Assets/Food.png")]
-        self.foodSpawnRate = 30
+        self.food = []
+        self.foodSpawnRate = 50
         self.spawnRange = [settings.gameRes*0.1, settings.gameRes*0.9]
         self.rng = random.Random()
 
     def update(self, timeStep):
-        if not self.food[0].active:
+        if not timeStep % self.foodSpawnRate:
             self.spawnFood()
 
     def randomPos(self):
@@ -24,7 +24,14 @@ class FoodHandler:
         return pos
 
     def spawnFood(self):
-        food = self.food[0]
+        food = None
+        for foodBit in self.food:
+            if not foodBit.active:
+                food = foodBit
+                break
+        if not food:
+            food = Food(self.settings, [0, 0], "./Assets/Food.png")
+            self.food.append(food)
         while True:
             pos = self.randomPos()
             food.spawn(pos)
@@ -45,6 +52,7 @@ class FoodHandler:
                 foodBit.draw(screen)
 
     def reset(self):
+        timer = 0
         for foodBit in self.food:
             foodBit.active = False
 

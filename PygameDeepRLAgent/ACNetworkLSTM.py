@@ -1,8 +1,12 @@
+'''
+Currently not supported
+'''
+
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 
-class ACNetwork:
+class ACNetworkLSTM:
     def __init__(self, settings, scope, step=0):
         with tf.variable_scope(scope):
             self.frame = tf.placeholder(shape=[None, settings.gameRes, settings.gameRes],
@@ -32,10 +36,32 @@ class ACNetwork:
                 stride=[2, 2],
                 scope="conv3"
             )
-            hidden = slim.fully_connected(slim.flatten(self.conv3), 1024, activation_fn=tf.nn.elu, scope="fc1")
-            hidden2 = slim.fully_connected(hidden, 1024, activation_fn=tf.nn.elu, scope="fc2")
-            p0 = slim.fully_connected(hidden2, 512, activation_fn=tf.nn.elu, scope="p0")
-            v0 = slim.fully_connected(hidden2, 512, activation_fn=tf.nn.elu, scope="v0")
+
+            lstmCell = tf.contrib.rnn.BasicLSTMCell(128, state_is_tuple=True)
+            cInit = np.zeros(shape=(1, lstmCell.state_size.c), dtype=np.float32)
+            hInit = np.zeros(shape=(1, lstmCell.state_size.h), dtype=np.float32)
+            self.stateInit = [cInit, hInit]
+            cIn = tf.placeholder(shape=[1, lstmCell.state_size.c], dtype=tf.float32, name="cIn")
+            hIn = tf.placeholder(shape=[1, lstmCell.state_size.h], dtype=tf.float32, name="hIn")
+            self.stateIn = [cIn, hIn]
+            rnnIn = tf.expand_dims(slim.flatten(self.conv3), [0])
+            stepSize = tf.shape(self.input)[:1]
+            stateIn = tf.contrib.rnn.LSTMStateTuple(cIn, hIn)
+            lstmOutputs, lstmState = tf.nn.dynamic_rnn(
+                lstmCell,
+                rnnIn,
+                initial_state=stateIn,
+                sequence_length=stepSize,
+                time_major=False
+            )
+            lstmC, lstmH = lstmState
+            self.stateOut = [lstmC[:1, :], lstmH[:1, :]]
+            rnnOut = tf.reshape(lstmOutputs, [-1, 128])
+
+            hidden = slim.fully_connected(rnnOut, 512, activation_fn=tf.nn.elu, scope="fc1")
+            hidden2 = slim.fully_connected(hidden, 512, activation_fn=tf.nn.elu, scope="fc2")
+            p0 = slim.fully_connected(hidden2, 256, activation_fn=tf.nn.elu, scope="p0")
+            v0 = slim.fully_connected(hidden2, 256, activation_fn=tf.nn.elu, scope="v0")
             self.value = slim.fully_connected(v0, 1,
                                               activation_fn=None,
                                               weights_initializer=self.weightInit(1.0),
@@ -74,7 +100,7 @@ class ACNetwork:
                                                          step,
                                                          settings.lrDecayStep,
                                                          settings.lrDecayRate)
-                    optimizer = tf.train.AdamOptimizer(self.lr)
+                    optimizer = tf.train.AdamOptimizer(self.lr);
 
                     # Apply local gradients to global network
                     globalVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')

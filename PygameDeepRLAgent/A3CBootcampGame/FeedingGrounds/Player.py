@@ -19,7 +19,7 @@ class Player(Actor):
         screen.blit(self.sprite, self.pos)
 
     def reset(self):
-        self.pos = np.array([self.settings.gameRes / 2, self.settings.gameRes / 5])
+        self.pos = np.array([self.settings.gameRes / 2, self.settings.gameRes / 2])
 
 
 

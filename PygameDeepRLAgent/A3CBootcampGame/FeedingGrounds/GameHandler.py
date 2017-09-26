@@ -6,13 +6,13 @@ class GameHandler:
         self.player = player
         self.food = food
         self.playerScore = 0
-        self.episodeLength = 900 # Amount of frames in a episode
+        self.episodeLength = 1200 # Amount of frames in a episode
 
     def update(self, timeStep, episodeData):
         while len(self.events):
             event = self.events.pop()
             if event[0] == "Player ate food!":
-                episodeData[event[1]][2] = 1
+                episodeData[event[1]][2] = 0.5
                 self.playerScore += 1
         if timeStep == self.episodeLength:
             return False

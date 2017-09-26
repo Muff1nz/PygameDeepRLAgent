@@ -41,13 +41,13 @@ class physicsHandler():
                 if GE.target:
                     if boxCollision(bullet, GE.target):
                         GE.target.playerBulletCollision()
-                        bullet.wallCollision()
+                        bullet.onCollision()
                         if self.settings.causalityTracking:
                             self.events.append(["Player hit target!", bullet.playerTimeStep])
                         else:
                             self.events.append(["Player hit target!", playerTimeStep])
                 if boxWallCollision(bullet, GE.walls):
-                    bullet.wallCollision()
+                    bullet.onCollision()
 
 
 # ============================Helper functions========================================
@@ -72,28 +72,12 @@ def boxCollision(box1, box2):
 # returns true if a box and a line is colliding
 def boxLineCollision(line, box):
     sign = 0
-    boundsCount = 0
     for vertex in box.vertices:
         sign += np.sign(line.line(vertex[0] + box.pos[0], vertex[1] + box.pos[1]))
-        if checkLineBounds(line, vertex + box.pos) or line.straight:
-            boundsCount += 1
-    if abs(sign) != 4 and boundsCount != 0:
+    if abs(sign) != 4:
         return True
     return False
 
-
-# returns true if a point is inside the bounds of a line
-def checkLineBounds(line, point):
-    offset = 1
-    y = [line.start[1], line.end[1]]
-    x = [line.start[0], line.end[0]]
-    bounds = []
-    xBound = (max(x) + offset) > point[0] > (min(x) - offset)
-    yBound = (max(y) + offset) > point[1] > (min(y) - offset)
-    if xBound and yBound:  # Point is inside the range of the line
-        return True
-    else:
-        return False  # Point is outside range of line
 
 
 # ==========================Helper classes============================
@@ -128,7 +112,7 @@ class QuadTree():
         self.depth = depth
         self.box = box
         if box.size == -1:
-            box.size = settings.screenRes
+            box.size = settings.gameRes
         self.rect = pygame.Rect(self.box.pos[0], self.box.pos[1], self.box.size, self.box.size)
         self.nodes = []
         if GE.count > settings.quadTreeMaxObjects and self.depth < settings.quadTreeDepth:

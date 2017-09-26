@@ -33,6 +33,6 @@ class Bullet(Actor):
             if self.timer >= self.TTL * self.settings.gameSecond:
                 self.active = False
 
-    def wallCollision(self):
+    def onCollision(self):
         self.active = False
 

@@ -1,25 +1,39 @@
 import numpy as np
 import pygame
 
+
 class physicsHandler():
-    def __init__(self, world, player, foodHandler, settings):
+    def __init__(self, world, player, enemies, settings):
         self.settings = settings
         self.world = world
         self.player = player
-        self.food = foodHandler.food
+        self.enemies = enemies
         self.events = []
         self.quadTree = None
+
+        self.pc = 0
 
     # Checks for collisions between objects in game and resolves them
     def update(self, playerTimeStep):
         # Make quadTree
-        food = []
+        playerBullets = []
+        enemyBullets = []
+        enemies = []
 
-        for foodBit in self.food:
-            if foodBit.active:
-                food.append(foodBit)
+        if self.player.ws.active:
+            for bullet in self.player.ws.bullets:
+                if bullet.active:
+                    playerBullets.append(bullet)
 
-        GE = GameEntities(self.player, food, self.world.walls)
+        for enemy in self.enemies:
+            if enemy.active:
+                enemies.append(enemy)
+            if enemy.ws.active:
+                for bullet in enemy.ws.bullets:
+                    if bullet.active:
+                        enemyBullets.append(bullet)
+
+        GE = GameEntities(self.player, playerBullets, enemies, enemyBullets, self.world.walls)
         self.quadTree = QuadTree(GE, self.settings)
         self.traverseAndCheckQuads(self.quadTree, playerTimeStep)
 
@@ -36,12 +50,31 @@ class physicsHandler():
         # collisions for player
         if GE.player:
             boxWallCollision(GE.player, GE.walls)
-            for foodBit in GE.food:
-                if boxCollision(foodBit, GE.player):
-                    foodBit.playerCollision()
-                    self.events.append(["Player ate food!", playerTimeStep])
+            for bullet in GE.playerBullets:
+                for enemy in GE.enemies:
+                    if boxCollision(bullet, enemy):
+                        enemy.kill()
+                        bullet.onCollision()
+                        if self.settings.causalityTracking:
+                            self.events.append(["Player hit enemy!", bullet.playerTimeStep])
+                        else:
+                            self.events.append(["Player hit enemy!", playerTimeStep])
+                if boxWallCollision(bullet, GE.walls):
+                    bullet.onCollision()
 
-#============================Helper functions========================================
+        # collisions for enemies
+        for enemy in GE.enemies:
+            if boxWallCollision(enemy, GE.walls):
+                enemy.onWallCollision()
+            for bullet in GE.enemyBullets:
+                if GE.player:
+                    if boxCollision(bullet, GE.player):
+                        self.events.append(["Enemy hit player!", playerTimeStep])
+                if boxWallCollision(bullet, GE.walls):
+                    bullet.onCollision()
+
+
+# ============================Helper functions========================================
 def boxWallCollision(box, walls):
     for wall in walls:
         if boxLineCollision(wall, box):
@@ -49,41 +82,28 @@ def boxWallCollision(box, walls):
             return True
     return False
 
+
 # returns true if two boxes are colliding
 def boxCollision(box1, box2):
     if (box1.pos[1] + box1.size <= box2.pos[1] or
-        box1.pos[1] >= box2.pos[1] + box2.size or
-        box1.pos[0] + box1.size <= box2.pos[0] or
-        box1.pos[0] >= box2.pos[0] + box2.size):
+                box1.pos[1] >= box2.pos[1] + box2.size or
+                    box1.pos[0] + box1.size <= box2.pos[0] or
+                box1.pos[0] >= box2.pos[0] + box2.size):
         return False
     return True
+
 
 # returns true if a box and a line is colliding
 def boxLineCollision(line, box):
     sign = 0
-    boundsCount = 0
     for vertex in box.vertices:
         sign += np.sign(line.line(vertex[0] + box.pos[0], vertex[1] + box.pos[1]))
-        if checkLineBounds(line, vertex + box.pos) or line.straight:
-            boundsCount += 1
-    if abs(sign) != 4 and boundsCount != 0:
+    if abs(sign) != 4:
         return True
     return False
 
-# returns true if a point is inside the bounds of a line
-def checkLineBounds(line, point):
-    offset = 1
-    y = [line.start[1], line.end[1]]
-    x = [line.start[0], line.end[0]]
-    bounds = []
-    xBound = (max(x) + offset) > point[0] > (min(x) - offset)
-    yBound = (max(y) + offset) > point[1] > (min(y) - offset)
-    if xBound and yBound:  # Point is inside the range of the line
-        return True
-    else:
-        return False  # Point is outside range of line
 
-#==========================Helper classes============================
+# ==========================Helper classes============================
 class Box:
     def __init__(self, pos=np.zeros(shape=[2]), size=-1):
         self.pos = pos
@@ -94,14 +114,18 @@ class Box:
         self.vertices.append(np.array([self.size, 0]))
         self.vertices.append(np.array([self.size, self.size]))
 
+
 class GameEntities():
-    def __init__(self, player, food, walls):
+    def __init__(self, player, playerBullets, enemies, enemyBullets, walls):
         self.player = player
-        self.food = food
+        self.playerBullets = playerBullets
+        self.enemies = enemies
+        self.enemyBullets = enemyBullets
         self.walls = walls
-        self.count = len(self.food) + len(walls)
+        self.count = len(self.playerBullets) + len(self.enemies) + len(self.enemyBullets) + len(walls)
         if player:
             self.count += 1
+
 
 class QuadTree():
     def __init__(self, GE, settings, box=Box(), depth=0):
@@ -120,34 +144,44 @@ class QuadTree():
     def split(self):
         positions = np.array([
             [0, 0],
-            [0, self.box.size/2],
-            [self.box.size/2, 0],
-            [self.box.size/2, self.box.size/2]
+            [0, self.box.size / 2],
+            [self.box.size / 2, 0],
+            [self.box.size / 2, self.box.size / 2]
         ])
         positions = np.add(positions[..., :2], self.box.pos)
-        size = self.box.size/2
+        size = self.box.size / 2
         for i in range(4):
             box = Box(positions[i], size)
             self.nodes.append(QuadTree(self.assignObjectsToQuad(box), self.settings, box, self.depth + 1))
 
     def assignObjectsToQuad(self, box):
         player = None
-        food = []
+        playerBullets = []
+        enemies = []
+        enemyBullets = []
         walls = []
 
         if self.GE.player:
             if boxCollision(self.GE.player, box):
                 player = self.GE.player
 
-        for foodBit in self.GE.food:
-            if boxCollision(box, foodBit):
-                food.append(foodBit)
+        for bullet in self.GE.playerBullets:
+            if boxCollision(box, bullet):
+                playerBullets.append(bullet)
+
+        for enemy in self.GE.enemies:
+            if boxCollision(enemy, box):
+                    enemies.append(enemy)
+
+        for bullet in self.GE.enemyBullets:
+            if boxCollision(box, bullet):
+                enemyBullets.append(bullet)
 
         for wall in self.GE.walls:
             if boxLineCollision(wall, box):
                 walls.append(wall)
 
-        GE = GameEntities(player, food, walls)
+        GE = GameEntities(player, playerBullets, enemies, enemyBullets, walls)
         return GE
 
     def draw(self, screen):

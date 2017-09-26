@@ -1,62 +1,83 @@
-# Experimental main, for the new system with the game environment as a single object
+'''
+Redesigning the program
+
+Currently not updated:
+-FeedingGrounds game
+-ShootingGrounds game
+-ACNetworkLSTM model
+'''
+
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from multiprocessing import Process, Queue
 from threading import Thread
 import os
 
 import tensorflow as tf
-import time
 
 from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
 from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
+from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
+
 from ACNetwork import ACNetwork
-from Worker import Worker
+from ACNetworkLSTM import ACNetworkLSTM
+from Trainer import Trainer
 from init import Settings
 
 
-def gameProcess(settings, gameDataQueue, playerActionQueue):
-    game = ShootingGrounds(settings, gameDataQueue, playerActionQueue)
-    while 1:
-        game.runGameLoop()
-        #time.sleep(settings.sleepTime)
+def utilityThread(settings, sess, saver, globalEpisodes, coord):
+    lastEpisodePrint = 0
+    lastSave = 0
+    while not coord.should_stop():
+        episodeNumber = sess.run(globalEpisodes)
+        if (episodeNumber % 5 == 0 and episodeNumber != lastEpisodePrint):
+            print("Global episodes: {}".format(sess.run(globalEpisodes)))
+            lastEpisodePrint = episodeNumber
 
-def workerThread(worker, settings, sess, coord, saver):
-    gameDataQueue, playerActionQueue = Queue(), Queue()
-    game = Process(target=gameProcess, args=(settings, gameDataQueue, playerActionQueue))
-    game.start()
-    worker.work(settings, gameDataQueue, playerActionQueue, sess, coord, saver)
-    game.terminate()
+        if (episodeNumber % 2000 == 0 and episodeNumber != lastSave):
+            print("UtilityThread is saving the model!")
+            saver.save(sess, settings.tfGraphPath + settings.agentName, episodeNumber)
+            lastSave = episodeNumber
+
+        if (episodeNumber > settings.trainingEpisodes):
+            coord.request_stop()
+
+    print("Program is terminating, utilityThread is saving the model!")
+    saver.save(sess, settings.tfGraphPath + settings.agentName, sess.run(globalEpisodes))
 
 def main():
+    games = {"FeedingGrounds": FeedingGrounds,
+             "ShootingGrounds": ShootingGrounds,
+             "MultiDuelGrounds": MultiDuelGrounds}
+
+    models = {"ACNetwork": ACNetwork,
+              "ACNetworkLSTM": ACNetworkLSTM}
 
     settings = Settings()
-    writer = tf.summary.FileWriter(settings.tbPath)
-    globalNetwork = ACNetwork(settings, "global")
-    workers = []
-    for i in range(settings.workerCount):
-        workers.append(Worker(settings, i))
-    #writer.add_graph(tf.get_default_graph())
-    #writer.flush()
-    saver = tf.train.Saver(max_to_keep=2, keep_checkpoint_every_n_hours=1)
 
-    workerThreads = []
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
     with tf.Session(config=config) as sess:
+        globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
+        globalNetwork = models[settings.model](settings, "global")
+        coord = tf.train.Coordinator()
+        threads = []
+        for i in range(settings.trainerCount):
+            threads.append(Trainer(settings, sess, models, i, coord, globalEpisodes))
+        saver = tf.train.Saver(max_to_keep=1, keep_checkpoint_every_n_hours=2)
+
         if settings.loadCheckpoint:
             saver.restore(sess, settings.tfCheckpoint)
         else:
             sess.run(tf.global_variables_initializer())
-        coord = tf.train.Coordinator()
-        for worker in workers:
-            thread = Thread(target=workerThread, args=(worker, settings, sess, coord, saver))
+
+        threads.append(Thread(target=utilityThread, args=(settings, sess, saver, globalEpisodes, coord)))
+        for thread in threads:
             thread.start()
-            workerThreads.append(thread)
-        coord.join(workerThreads)
+        coord.join(threads)
 
 if __name__ == "__main__":
     main()
