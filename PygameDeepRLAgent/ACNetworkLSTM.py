@@ -1,7 +1,3 @@
-'''
-Currently not supported
-'''
-
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
@@ -37,7 +33,7 @@ class ACNetworkLSTM:
                 scope="conv3"
             )
 
-            lstmCell = tf.contrib.rnn.BasicLSTMCell(128, state_is_tuple=True)
+            lstmCell = tf.contrib.rnn.BasicLSTMCell(256, state_is_tuple=True)
             cInit = np.zeros(shape=(1, lstmCell.state_size.c), dtype=np.float32)
             hInit = np.zeros(shape=(1, lstmCell.state_size.h), dtype=np.float32)
             self.stateInit = [cInit, hInit]
@@ -56,7 +52,7 @@ class ACNetworkLSTM:
             )
             lstmC, lstmH = lstmState
             self.stateOut = [lstmC[:1, :], lstmH[:1, :]]
-            rnnOut = tf.reshape(lstmOutputs, [-1, 128])
+            rnnOut = tf.reshape(lstmOutputs, [-1, 256])
 
             hidden = slim.fully_connected(rnnOut, 512, activation_fn=tf.nn.elu, scope="fc1")
             hidden2 = slim.fully_connected(hidden, 512, activation_fn=tf.nn.elu, scope="fc2")

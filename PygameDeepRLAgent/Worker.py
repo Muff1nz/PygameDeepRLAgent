@@ -7,6 +7,7 @@ class Worker(Thread):
         Thread.__init__(self)
         self.localAC = network
         self.name = '{}_worker{}'.format(trainerName, number)
+        self.number = number
         self.settings = settings
         self.trainerQueue = queue
         self.coord = coord
@@ -28,13 +29,16 @@ class Worker(Thread):
         episodeInProgress = True
         while episodeInProgress:
             gameData = gameDataQueue.get() # Get data from the game
-
+            rnnState = self.localAC.stateInit
             if gameData[0] == "CurrentFrame": # Process the next action based on frame
                 frame = gameData[1]
-                feedDict = {self.localAC.frame: [frame]}
-                actionDist, value = self.sess.run([self.localAC.logits,
-                                                       self.localAC.value],
-                                                       feed_dict=feedDict)
+                feedDict = {self.localAC.frame: [frame],
+                            self.localAC.stateIn[0]: rnnState[0],
+                            self.localAC.stateIn[1]: rnnState[1]}
+                actionDist, value, rnnState = self.sess.run([self.localAC.logits,
+                                                             self.localAC.value,
+                                                             self.localAC.stateOut],
+                                                             feed_dict=feedDict)
                 action = np.random.choice(actionDist[0], p=actionDist[0])
                 action = np.argmax(actionDist==action)
 
@@ -49,7 +53,8 @@ class Worker(Thread):
                 workerData = {"episodeData": episodeData,
                               "values": bootstrapValues,
                               "bootStrapValue": values[0],
-                              "score": -1}
+                              "score": -1,
+                              "worker": self.number}
                 self.trainerQueue.put(workerData)
 
             elif gameData[0] == "EpisodeData": # Episode is finished, perform training and logging
@@ -58,7 +63,8 @@ class Worker(Thread):
                 workerData = {"episodeData": episodeData,
                               "values": values,
                               "bootStrapValue": 0,
-                              "score": score}
+                              "score": score,
+                              "worker": self.number}
                 self.trainerQueue.put(workerData)
                 episodeInProgress = False
                 values = []

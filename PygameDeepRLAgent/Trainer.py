@@ -1,11 +1,13 @@
-import tensorflow as tf
-from threading import Thread
 from queue import Queue
+from threading import Thread
+
 import numpy as np
 import scipy.signal
+import tensorflow as tf
 
+from ACNetworkLSTM import ACNetworkLSTM
 from Worker import Worker
-from ACNetwork import ACNetwork
+
 
 class Trainer(Thread):
     def __init__(self, settings, sess, number, coord, globalEpisodes):
@@ -21,8 +23,9 @@ class Trainer(Thread):
 
         self.localEpisodes = tf.Variable(0, dtype=tf.int32, name='{}_episodes'.format(self.name), trainable=False)
         self.writer = tf.summary.FileWriter(settings.tbPath + self.name)
+        self.summaryData = {}
 
-        self.localAC = ACNetwork(settings, self.name, step=self.localEpisodes)
+        self.localAC = ACNetworkLSTM(settings, self.name, step=self.localEpisodes)
         globalNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
         localNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
         self.updateLocalVars = []
@@ -34,6 +37,7 @@ class Trainer(Thread):
         for i in range(self.settings.workersPerTrainer):
             workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, self.trainerQueue, self.coord))
             workers[i].start()
+            self.summaryData[str(i)] = SummaryData(self.writer)
         while not self.coord.should_stop() or self.isAlive(workers):
             self.train()
         print("{} is quitting!".format(self.name))
@@ -49,13 +53,11 @@ class Trainer(Thread):
 
     def train(self):
         trainingData = self.trainerQueue.get()
-        qSize = self.trainerQueue.qsize()
-        print("{} is training! {} items left in queue".format(self.name, qSize))
-        self.sess.run(self.incrementGE)
         episodeData = trainingData["episodeData"]
         values = trainingData["values"]
         bootStrapValue = trainingData["bootStrapValue"]
         score = trainingData["score"]
+        worker = trainingData["worker"]
 
         frames = episodeData[:, 0]
         actions = episodeData[:, 1]
@@ -73,34 +75,68 @@ class Trainer(Thread):
 
         # Update the global network using gradients from loss
         # Generate network statistics to periodically save
-        feedDict = { self.localAC.targetV: discountedRewards,
-                     self.localAC.frame: frames,
-                     self.localAC.actions: actions,
-                     self.localAC.advantages: advantages}
         self.sess.run(self.updateLocalVars)
-        vl, pl, e, gn, vn, _ = self.sess.run([ self.localAC.valueLoss,
-                                          self.localAC.policyLoss,
-                                          self.localAC.entropy,
-                                          self.localAC.gradNorms,
-                                          self.localAC.varNorms,
-                                          self.localAC.applyGradsGlobal],
-                                          feed_dict=feedDict)
-        self.writeSummaries(vl/size, pl/size, e/size, gn, vn, score)
+        rnnState = self.localAC.stateInit
+        feedDict = {self.localAC.targetV: discountedRewards,
+                    self.localAC.frame: frames,
+                    self.localAC.actions: actions,
+                    self.localAC.advantages: advantages,
+                    self.localAC.stateIn[0]: rnnState[0],
+                    self.localAC.stateIn[1]: rnnState[1]}
+        vl, pl, e, gn, vn, _ = self.sess.run([self.localAC.valueLoss,
+                                              self.localAC.policyLoss,
+                                              self.localAC.entropy,
+                                              self.localAC.gradNorms,
+                                              self.localAC.varNorms,
+                                              self.localAC.applyGradsGlobal],
+                                              feed_dict=feedDict)
 
+        self.summaryData[str(worker)].extend(size, vl, pl, e, gn, vn, score)
+        if bootStrapValue == 0: # This means that a worker has finished an episode
+            self.sess.run(self.incrementGE)
+            print("{} is training with worker{}s data!".format(self.name, worker))
+            self.summaryData[str(worker)].write(self.sess.run(self.localAC.lr), self.sess.run(self.localEpisodes))
+            self.summaryData[str(worker)].clear()
 
+class SummaryData:
+    def __init__(self, writer):
+        self.clear()
+        self.writer = writer
 
-    def writeSummaries(self, vl, pl, e, gn, vn, score):
+    def extend(self, size, vl, pl, e, gn, vn, score):
+        self.size += size
+        self.valueLoss += vl
+        self.policyLoss += pl
+        self.entropy += e
+        self.gradientNorm += gn
+        self.variableNorm += vn
+        self.score += score
+        self.bootStrapCount += 1
+
+    def clear(self):
+        self.size = 0
+        self.valueLoss = 0
+        self.policyLoss = 0
+        self.entropy = 0
+        self.gradientNorm = 0
+        self.variableNorm = 0
+        self.score = 0
+        self.bootStrapCount = 0
+
+    def write(self, lr, episode):
         summary = tf.Summary()
-        summary.value.add(tag="Performance/Score", simple_value=score)
-        summary.value.add(tag='Losses/Value Loss', simple_value=float(vl))
-        summary.value.add(tag='Losses/Policy Loss', simple_value=float(pl))
-        summary.value.add(tag='Losses/Entropy', simple_value=float(e))
-        summary.value.add(tag='Losses/Grad Norm', simple_value=float(gn))
-        summary.value.add(tag='Losses/Var Norm', simple_value=float(vn))
+        summary.value.add(tag="Performance/Score", simple_value=self.score)
+        summary.value.add(tag="Performance/BootStrapCount", simple_value=self.bootStrapCount)
+        summary.value.add(tag='Losses/Value Loss', simple_value=float(self.valueLoss/self.size))
+        summary.value.add(tag='Losses/Policy Loss', simple_value=float(self.policyLoss/self.size))
+        summary.value.add(tag='Losses/Entropy', simple_value=float(self.entropy/self.size))
+        summary.value.add(tag='Losses/Grad Norm', simple_value=float(self.gradientNorm / self.bootStrapCount))
+        summary.value.add(tag='Losses/Var Norm', simple_value=float(self.variableNorm / self.bootStrapCount))
         summary.value.add(tag='Losses/Learning rate',
-                          simple_value=float(self.sess.run(self.localAC.lr)))
-        self.writer.add_summary(summary, self.sess.run(self.localEpisodes))
+                          simple_value=float(lr))
+        self.writer.add_summary(summary, episode)
         self.writer.flush()
+
 
 
     '''

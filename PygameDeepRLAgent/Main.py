@@ -2,12 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from threading import Thread
 import os
+from threading import Thread
 
 import tensorflow as tf
 
-from ACNetwork import ACNetwork
+from ACNetworkLSTM import ACNetworkLSTM
 from Trainer import Trainer
 from init import Settings
 
@@ -21,7 +21,7 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
             print("Global episodes: {}".format(sess.run(globalEpisodes)))
             lastEpisodePrint = episodeNumber
 
-        if (episodeNumber % 2000 == 0 and episodeNumber != lastSave):
+        if (episodeNumber % 10000 == 0 and episodeNumber != lastSave):
             print("UtilityThread is saving the model!")
             saver.save(sess, settings.tfGraphPath + settings.agentName, episodeNumber)
             lastSave = episodeNumber
@@ -40,7 +40,7 @@ def main():
     config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
     with tf.Session(config=config) as sess:
         globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
-        globalNetwork = ACNetwork(settings, "global")
+        globalNetwork = ACNetworkLSTM(settings, "global")
         coord = tf.train.Coordinator()
         threads = []
         for i in range(settings.trainerCount):

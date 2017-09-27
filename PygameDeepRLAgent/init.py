@@ -5,13 +5,13 @@ from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
 class Settings():
     def __init__(self):
         # General settings:
-        self.version = "1.01"
-        self.agentName = "Bobby"
-        self.activity = "GeneralPhysicsFeedingGrounds"
-        self.gpuMemoryFraction = 0.80
+        self.version = "1.20"
+        self.agentName = "A3CMaster"
+        self.activity = "MDGLSTM"
+        self.gpuMemoryFraction = 1.0
 
         # Game settings:
-        self.game = "FeedingGrounds"
+        self.game = "MultiDuelGrounds"
         self.screenRes = 1000 # Screen is always a square
         self.gameSecond = 60 # Amount of frames considered a second in game
         self.fps = 60 # Maximum fps for the game
@@ -31,7 +31,7 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 10000
+        self.trainingEpisodes = 1000000
 
         # Hyper parameters:
         self.model = "ACNetwork"
@@ -41,7 +41,7 @@ class Settings():
         self.gamma = 0.99
         self.trainerCount = 8
         self.workersPerTrainer = 4
-        self.maxEpisodeLength = 1200
+        self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
         self.learningRate = 0.8e-4
         self.lrDecayRate = 0.95
