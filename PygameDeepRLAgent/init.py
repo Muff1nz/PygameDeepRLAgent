@@ -1,21 +1,29 @@
+from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
+from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
+from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
+
 class Settings():
     def __init__(self):
         # General settings:
         self.version = "1.01"
         self.agentName = "Bobby"
-        self.activity = "NewArchitectureTest2"
-        self.gpuMemoryFraction = 1.00
+        self.activity = "GeneralPhysicsFeedingGrounds"
+        self.gpuMemoryFraction = 0.80
 
         # Game settings:
-        self.game = "ShootingGrounds"
+        self.game = "FeedingGrounds"
         self.screenRes = 1000 # Screen is always a square
         self.gameSecond = 60 # Amount of frames considered a second in game
         self.fps = 60 # Maximum fps for the game
         self.mspf = 1 / self.fps * 1000 # miliseconds per frame
 
-        self.quadTreeDepth = 2
-        self.quadTreeMaxObjects = 10
-        self.renderQuads = False
+        self.quadTreeDepth = 3
+        self.quadTreeMaxObjects = 6
+        self.renderQuads = True
+
+        self.games = {"FeedingGrounds": [FeedingGrounds, 4],
+                      "ShootingGrounds": [ShootingGrounds, 9],
+                      "MultiDuelGrounds": [MultiDuelGrounds, 9]}
 
         # If enabled, the game will assign rewards to the state-action-reward tuple that caused the reward.
         # If a bullet is shot at time step 10, and it hits a enemy at time step 15, the time step when the bullet
@@ -23,13 +31,13 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 100000
+        self.trainingEpisodes = 10000
 
         # Hyper parameters:
         self.model = "ACNetwork"
 
         self.gameRes = 80
-        self.actionSize = 9
+        self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
         self.trainerCount = 8
         self.workersPerTrainer = 4

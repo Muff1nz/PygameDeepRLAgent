@@ -10,6 +10,7 @@ class FoodHandler:
         self.settings = settings
         self.player = player
         self.food = []
+        for _ in range(100): self.food.append(Food(self.settings, [0, 0], "./Assets/Food.png"))
         self.foodSpawnRate = 50
         self.spawnRange = [settings.gameRes*0.1, settings.gameRes*0.9]
         self.rng = random.Random()
@@ -30,8 +31,7 @@ class FoodHandler:
                 food = foodBit
                 break
         if not food:
-            food = Food(self.settings, [0, 0], "./Assets/Food.png")
-            self.food.append(food)
+            food = self.food[0]
         while True:
             pos = self.randomPos()
             food.spawn(pos)
@@ -60,15 +60,12 @@ class Food(Actor):
     def __init__(self, settings, pos, spritePath):
         super(Food, self).__init__(settings, spritePath, 0.1)
         self.type = "food"
-        self.active = True
+        self.active = False
         self.pos = pos
 
     def spawn(self, pos):
         self.pos = pos
         self.active = True
-
-    def playerCollision(self):
-        self.active = False
 
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)

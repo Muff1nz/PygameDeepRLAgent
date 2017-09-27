@@ -78,8 +78,9 @@ class Enemy(Actor):
     def onWallCollision(self):
         self.strafeDir *= -1
 
-    def kill(self):
-        self.active = False
+    def onBoxCollision(self, other):
+        if (other.type == "bullet"):
+            self.active = False
 
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)

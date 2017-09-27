@@ -1,12 +1,12 @@
 from multiprocessing import Process
-
 import numpy as np
 import pygame
+
 from A3CBootcampGame.ShootingGrounds.Targets import TargetHandler
 from A3CBootcampGame.ShootingGrounds.GameHandler import GameHandler
 from A3CBootcampGame.ShootingGrounds.Player import Player
 from A3CBootcampGame.ShootingGrounds.world import World
-from A3CBootcampGame.ShootingGrounds.physics import physicsHandler
+from A3CBootcampGame.physics import physicsHandler
 
 WHITE = 255, 255, 255
 # Class for the shooting grounds level in A3CBootCamp
@@ -36,13 +36,23 @@ class ShootingGrounds(Process):
 
         self.gameCounter = 0
         self.playerAction = 0
-        self.playerTimeStep = -1
+        self.timeStep = -1
 
         self.world = World(self.settings)
         self.player = Player(self.settings, "./Assets/Player.png")
         self.targetHandler = TargetHandler(self.settings, self.player)
-        self.physics = physicsHandler(self.world, self.player, self.targetHandler, self.settings)
         self.gameHandler = GameHandler(self.player, self.targetHandler)
+
+        collisionGroups = 2
+        boxes = []
+        self.player.collisionGroup = 0
+        boxes.append(self.player)
+        for bullet in self.player.ws.bullets:
+            bullet.collisionGroup = 0
+            boxes.append(bullet)
+        self.targetHandler.target.collisionGroup = 1
+        boxes.append(self.targetHandler.target)
+        self.physics = physicsHandler(self.world.walls, boxes, collisionGroups, self.settings)
 
     def run(self):
         self.initGame()
@@ -55,7 +65,7 @@ class ShootingGrounds(Process):
                 self.episodeData = []
                 self.frames = []
                 self.gameHandler.resetGame()
-                self.playerTimeStep = -1
+                self.timeStep = -1
                 self.bootStrapCounter = 0
                 self.gameCounter = 0
 
@@ -64,12 +74,12 @@ class ShootingGrounds(Process):
             self.world.draw(self.gameScreen)
             self.targetHandler.draw(self.gameScreen)
             self.player.draw(self.gameScreen)
-            if self.settings.renderQuads:
-                self.physics.quadTree.draw(self.gameScreen)
             if self.window:
                 if pygame.mouse.get_focused():
+                    if self.settings.renderQuads:
+                        self.physics.quadTree.draw(self.gameScreen)
                     montiroFrame = pygame.transform.scale(self.gameScreen.copy(),
-                                                         (self.settings.screenRes, self.settings.screenRes))
+                                                          (self.settings.screenRes, self.settings.screenRes))
                     self.screen.blit(montiroFrame, montiroFrame.get_rect())
                     pygame.display.flip()
 
@@ -79,13 +89,13 @@ class ShootingGrounds(Process):
                 # Send frame to agent
                 self.gameDataQueue.put(["CurrentFrame", frame])
                 self.playerAction = self.playerActionQueue.get()
-                self.playerTimeStep += 1
+                self.timeStep += 1
                 # Rewards default to 0, game handler will track causality and update
                 self.episodeData.append([frame, self.playerAction, 0])
 
             # Update stuff
-            self.player.update(self.playerAction, self.playerTimeStep)
-            self.physics.update(self.playerTimeStep)
+            self.player.update(self.playerAction, self.timeStep)
+            self.physics.update(self.timeStep)
             self.targetHandler.update(self.gameCounter)
             self.episodeInProgress = self.gameHandler.update(self.physics.events, self.gameCounter, self.episodeData)
 

@@ -5,9 +5,10 @@ import numpy as np
 import scipy.signal
 
 from Worker import Worker
+from ACNetwork import ACNetwork
 
 class Trainer(Thread):
-    def __init__(self, settings, sess, models, number, coord, globalEpisodes):
+    def __init__(self, settings, sess, number, coord, globalEpisodes):
         Thread.__init__(self)
         self.settings = settings
         self.trainerQueue = Queue(5)
@@ -21,7 +22,7 @@ class Trainer(Thread):
         self.localEpisodes = tf.Variable(0, dtype=tf.int32, name='{}_episodes'.format(self.name), trainable=False)
         self.writer = tf.summary.FileWriter(settings.tbPath + self.name)
 
-        self.localAC = models[settings.model](settings, self.name, step=self.localEpisodes)
+        self.localAC = ACNetwork(settings, self.name, step=self.localEpisodes)
         globalNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
         localNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
         self.updateLocalVars = []
@@ -102,10 +103,7 @@ class Trainer(Thread):
         self.writer.flush()
 
 
-    def saveModel(self):
-
-
-     '''
+    '''
     def makeGifs(self, episodeData, episodeCount, settings):
         plusRewardIndex = -1
         minusRewardIndex = -1

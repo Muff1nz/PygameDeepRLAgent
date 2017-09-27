@@ -2,8 +2,6 @@ from multiprocessing import Queue
 import numpy as np
 from threading import Thread
 
-from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
-
 class Worker(Thread):
     def __init__(self, settings, sess, trainerName, number, network, queue, coord):
         Thread.__init__(self)
@@ -17,7 +15,7 @@ class Worker(Thread):
     def run(self):
         gameDataQueue, playerActionQueue = Queue(), Queue()
         playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
-        game = ShootingGrounds(self.settings, gameDataQueue, playerActionQueue)
+        game = self.settings.games[self.settings.game][0](self.settings, gameDataQueue, playerActionQueue)
         game.start()
         with self.sess.as_default(), self.sess.graph.as_default():
             while not self.coord.should_stop():
