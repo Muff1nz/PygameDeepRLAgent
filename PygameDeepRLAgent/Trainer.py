@@ -7,13 +7,13 @@ import scipy.signal
 from Worker import Worker
 
 class Trainer(Thread):
-    def __init__(self, settings, sess, models, number, coord, globalEpisodes):
+    def __init__(self, settings, models, number, coord, globalEpisodes):
         Thread.__init__(self)
         self.settings = settings
         self.trainerQueue = Queue(5)
         self.coord = coord
-        self.sess = sess
         self.name = 'trainer{}'.format(number)
+        self.number = number
 
         self.globalEpisodes = globalEpisodes
         self.incrementGE = self.globalEpisodes.assign_add(1)
@@ -28,14 +28,12 @@ class Trainer(Thread):
         for gnVars, lnVars in zip(globalNetwork, localNetwork):
             self.updateLocalVars.append(lnVars.assign(gnVars))
 
-    def run(self):
+    def init(self, sess):
+        self.sess = sess
         workers = []
         for i in range(self.settings.workersPerTrainer):
             workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, self.trainerQueue, self.coord))
             workers[i].start()
-        while not self.coord.should_stop() or self.isAlive(workers):
-            self.train()
-        print("{} is quitting!".format(self.name))
 
     def isAlive(self, workers):
         for worker in workers:
@@ -84,7 +82,7 @@ class Trainer(Thread):
                                           self.localAC.varNorms,
                                           self.localAC.applyGradsGlobal],
                                           feed_dict=feedDict)
-        self.writeSummaries(vl/size, pl/size, e/size, gn, vn, score)
+        ##self.writeSummaries(vl/size, pl/size, e/size, gn, vn, score)
 
 
 

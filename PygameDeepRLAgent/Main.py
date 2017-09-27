@@ -1,6 +1,5 @@
 '''
 Redesigning the program
-
 Currently not updated:
 -FeedingGrounds game
 -ShootingGrounds game
@@ -13,9 +12,8 @@ from __future__ import division
 from __future__ import print_function
 
 from threading import Thread
+from multiprocessing import Process
 import os
-
-import tensorflow as tf
 
 from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
 from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
@@ -26,28 +24,51 @@ from ACNetworkLSTM import ACNetworkLSTM
 from Trainer import Trainer
 from init import Settings
 
+import time
 
-def utilityThread(settings, sess, saver, globalEpisodes, coord):
-    lastEpisodePrint = 0
-    lastSave = 0
-    while not coord.should_stop():
-        episodeNumber = sess.run(globalEpisodes)
-        if (episodeNumber % 5 == 0 and episodeNumber != lastEpisodePrint):
-            print("Global episodes: {}".format(sess.run(globalEpisodes)))
-            lastEpisodePrint = episodeNumber
+def getClusterSpec(settings):
+    port = 0
+    ps = []
+    for _ in range(settings.psCount):
+        ps.append("localhost:{}".format(2000 + port))
+        port += 1
 
-        if (episodeNumber % 2000 == 0 and episodeNumber != lastSave):
-            print("UtilityThread is saving the model!")
-            saver.save(sess, settings.tfGraphPath + settings.agentName, episodeNumber)
-            lastSave = episodeNumber
+    workers = []
+    for _ in range(settings.trainerCount):
+        workers.append("localhost:{}".format(2000 + port))
+        port += 1
 
-        if (episodeNumber > settings.trainingEpisodes):
-            coord.request_stop()
+    clusterSpec = {"ps": ps,
+                   "worker": workers}
+    return clusterSpec
 
-    print("Program is terminating, utilityThread is saving the model!")
-    saver.save(sess, settings.tfGraphPath + settings.agentName, sess.run(globalEpisodes))
+def process(number, task):
+    import tensorflow as tf
 
-def main():
+    settings = Settings()
+    clusterSpec = getClusterSpec(settings)
+    cluster = tf.train.ClusterSpec(clusterSpec)
+
+
+    print("Making a server")
+    if task == "ps":
+        config = tf.ConfigProto(device_filters=["/job:ps"])
+        config.gpu_options.per_process_gpu_memory_fraction = 0.0
+        server = tf.train.Server(cluster,
+                                 job_name=task,
+                                 task_index=number,
+                                 config=config)
+        server.join()
+
+    else:
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
+        server = tf.train.Server(cluster,
+                                 job_name=task,
+                                 task_index=number,
+                                 config=config)
+
+
     games = {"FeedingGrounds": FeedingGrounds,
              "ShootingGrounds": ShootingGrounds,
              "MultiDuelGrounds": MultiDuelGrounds}
@@ -55,29 +76,51 @@ def main():
     models = {"ACNetwork": ACNetwork,
               "ACNetworkLSTM": ACNetworkLSTM}
 
-    settings = Settings()
-
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
+    ##config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
-    with tf.Session(config=config) as sess:
+
+    with tf.device(tf.train.replica_device_setter(
+            worker_device="/job:worker/task:{}".format(number),
+            cluster=clusterSpec)):
+        print("MAKING MODEL")
         globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
         globalNetwork = models[settings.model](settings, "global")
         coord = tf.train.Coordinator()
-        threads = []
-        for i in range(settings.trainerCount):
-            threads.append(Trainer(settings, sess, models, i, coord, globalEpisodes))
-        saver = tf.train.Saver(max_to_keep=1, keep_checkpoint_every_n_hours=2)
+        trainer = Trainer(settings, models, number, coord, globalEpisodes)
+        #saver = tf.train.Saver(max_to_keep=1, keep_checkpoint_every_n_hours=2)
+        initOp = tf.global_variables_initializer()
 
-        if settings.loadCheckpoint:
-            saver.restore(sess, settings.tfCheckpoint)
-        else:
-            sess.run(tf.global_variables_initializer())
+    monitor = tf.train.MonitoredTrainingSession(
+        master=server.target,
+        is_chief=(number == 0),
+        config=config)
 
-        threads.append(Thread(target=utilityThread, args=(settings, sess, saver, globalEpisodes, coord)))
-        for thread in threads:
-            thread.start()
-        coord.join(threads)
+
+    with monitor as sess:
+        print("MAKING A SESSION")
+        step = 0
+        trainer.init(sess)
+        while True:
+            trainer.train()
+            step += 1
+
+
+def main():
+    settings = Settings()
+    trainers = []
+    for i in range(settings.trainerCount):
+        trainers.append(Process(target=process, args=(i, "worker")))
+
+    for i in range(settings.psCount):
+        trainers.append(Process(target=process, args=(i, "ps")))
+
+    for trainer in trainers:
+        trainer.start()
+
+    for trainer in trainers:
+        trainer.join()
 
 if __name__ == "__main__":
     main()

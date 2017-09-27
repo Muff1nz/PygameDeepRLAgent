@@ -3,8 +3,8 @@ class Settings():
         # General settings:
         self.version = "1.01"
         self.agentName = "Bobby"
-        self.activity = "NewArchitectureTest2"
-        self.gpuMemoryFraction = 1.00
+        self.activity = "DistributedTF"
+        self.gpuMemoryFraction = 0.20
 
         # Game settings:
         self.game = "ShootingGrounds"
@@ -31,8 +31,9 @@ class Settings():
         self.gameRes = 80
         self.actionSize = 9
         self.gamma = 0.99
-        self.trainerCount = 8
-        self.workersPerTrainer = 4
+        self.trainerCount = 1
+        self.workersPerTrainer = 1
+        self.psCount = 1
         self.maxEpisodeLength = 1200
         self.bootStrapCutOff = 100
         self.learningRate = 0.8e-4

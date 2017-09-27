@@ -19,8 +19,7 @@ class Worker(Thread):
         playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
         game = ShootingGrounds(self.settings, gameDataQueue, playerActionQueue)
         game.start()
-        with self.sess.as_default(), self.sess.graph.as_default():
-            while not self.coord.should_stop():
+        while not self.coord.should_stop():
                 self.work(gameDataQueue, playerActionQueue)
         print("{} is quitting!".format(self.name))
         game.terminate()
