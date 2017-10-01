@@ -3,15 +3,18 @@ from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
 from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
 
 class Settings():
-    def __init__(self):
+    def __init__(self, game=None):
         # General settings:
         self.version = "1.20"
         self.agentName = "A3CMaster"
-        self.activity = "MDGLSTM"
+        self.activity = "MDG_LSTM_1e-5LR_8T_4W"
         self.gpuMemoryFraction = 1.0
 
         # Game settings:
-        self.game = "MultiDuelGrounds"
+        if game:
+            self.game = game
+        else:
+            self.game = "MultiDuelGrounds"
         self.screenRes = 1000 # Screen is always a square
         self.gameSecond = 60 # Amount of frames considered a second in game
         self.fps = 60 # Maximum fps for the game
@@ -19,7 +22,7 @@ class Settings():
 
         self.quadTreeDepth = 3
         self.quadTreeMaxObjects = 6
-        self.renderQuads = True
+        self.renderQuads = False
 
         self.games = {"FeedingGrounds": [FeedingGrounds, 4],
                       "ShootingGrounds": [ShootingGrounds, 9],
@@ -32,6 +35,7 @@ class Settings():
 
         # AI settings:
         self.trainingEpisodes = 1000000
+        self.logFreq = 50 # Log summaries every 50 episodes
 
         # Hyper parameters:
         self.model = "ACNetwork"
@@ -43,18 +47,18 @@ class Settings():
         self.workersPerTrainer = 4
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
-        self.learningRate = 0.8e-4
-        self.lrDecayRate = 0.95
+        self.learningRate = 1e-5
+        self.lrDecayRate = 1.00
         self.lrDecayStep = 100
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
-        self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
         self.loadCheckpoint = False
         self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
-        self.tfCheckpoint = 'C:/deepRLAgent/Agent/MultiDuelGrounds_ACNetworkLSTM_LSTMTest8e-6LR_flat_2SampleRate_A3CLSTM_1.01A3CLSTM-14219'  # Check point to load
+        self.tfCheckpoint = 'C:/deepRLAgent/Agent/MultiDuelGrounds_ACNetwork_MDG_LSTM_1e-6LR_16T_2W_A3CMaster_1.20A3CMaster-146559'  # Check point to load
         self.tfGraphPath = 'C:/deepRLAgent/Agent/{}_{}_{}_{}_{}'.format(self.game, self.model, self.activity, self.agentName, self.version)
         self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}/{}/{}'.format(self.game, self.model, self.activity, self.agentName, self.version)
         self.gifPath = 'C:/deepRLAgent/gif/{}_{}'.format(self.agentName, self.version)

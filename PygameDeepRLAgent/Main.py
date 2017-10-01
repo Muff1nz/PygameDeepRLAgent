@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 from threading import Thread
 
 import tensorflow as tf
@@ -10,7 +11,6 @@ import tensorflow as tf
 from ACNetworkLSTM import ACNetworkLSTM
 from Trainer import Trainer
 from init import Settings
-
 
 def utilityThread(settings, sess, saver, globalEpisodes, coord):
     lastEpisodePrint = 0
@@ -33,13 +33,18 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
     saver.save(sess, settings.tfGraphPath + settings.agentName, sess.run(globalEpisodes))
 
 def main():
-    settings = Settings()
+    if len(sys.argv) == 2:
+        settings = Settings(sys.argv[1])
+    else:
+        settings = Settings()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
+    #config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
+    config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
-        globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
+        with tf.device("/cpu:0"):
+            globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
         globalNetwork = ACNetworkLSTM(settings, "global")
         coord = tf.train.Coordinator()
         threads = []

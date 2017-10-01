@@ -8,6 +8,8 @@ import tensorflow as tf
 from ACNetworkLSTM import ACNetworkLSTM
 from Worker import Worker
 
+import time
+
 
 class Trainer(Thread):
     def __init__(self, settings, sess, number, coord, globalEpisodes):
@@ -18,14 +20,17 @@ class Trainer(Thread):
         self.sess = sess
         self.name = 'trainer{}'.format(number)
 
-        self.globalEpisodes = globalEpisodes
-        self.incrementGE = self.globalEpisodes.assign_add(1)
+        with tf.device("/cpu:0"):
+            self.globalEpisodes = globalEpisodes
+            self.incrementGE = self.globalEpisodes.assign_add(1)
+            self.localEpisodes = tf.Variable(0, dtype=tf.int32, name='local_episodes', trainable=False)
+            self.incrementLE = self.localEpisodes.assign_add(1)
 
-        self.localEpisodes = tf.Variable(0, dtype=tf.int32, name='{}_episodes'.format(self.name), trainable=False)
+        self.localSteps = tf.Variable(0, dtype=tf.int32, name='{}_episodes'.format(self.name), trainable=False)
         self.writer = tf.summary.FileWriter(settings.tbPath + self.name)
         self.summaryData = {}
 
-        self.localAC = ACNetworkLSTM(settings, self.name, step=self.localEpisodes)
+        self.localAC = ACNetworkLSTM(settings, self.name, step=self.localSteps)
         globalNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
         localNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
         self.updateLocalVars = []
@@ -36,10 +41,13 @@ class Trainer(Thread):
         workers = []
         for i in range(self.settings.workersPerTrainer):
             workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, self.trainerQueue, self.coord))
-            workers[i].start()
             self.summaryData[str(i)] = SummaryData(self.writer)
         while not self.coord.should_stop() or self.isAlive(workers):
             self.train()
+            for worker in workers:
+                worker.work()
+        for worker in workers:
+            worker.stop()
         print("{} is quitting!".format(self.name))
 
     def isAlive(self, workers):
@@ -52,51 +60,54 @@ class Trainer(Thread):
         return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
 
     def train(self):
-        trainingData = self.trainerQueue.get()
-        episodeData = trainingData["episodeData"]
-        values = trainingData["values"]
-        bootStrapValue = trainingData["bootStrapValue"]
-        score = trainingData["score"]
-        worker = trainingData["worker"]
+        if not self.trainerQueue.empty():
+            trainingData = self.trainerQueue.get()
+            episodeData = trainingData["episodeData"]
+            values = trainingData["values"]
+            bootStrapValue = trainingData["bootStrapValue"]
+            score = trainingData["score"]
+            worker = trainingData["worker"]
 
-        frames = episodeData[:, 0]
-        actions = episodeData[:, 1]
-        rewards = episodeData[:, 2]
-        frames = np.asarray(frames.tolist())
-        size = len(episodeData)
-        gamma = self.settings.gamma
+            frames = episodeData[:, 0]
+            actions = episodeData[:, 1]
+            rewards = episodeData[:, 2]
+            frames = np.asarray(frames.tolist())
+            size = len(episodeData)
+            gamma = self.settings.gamma
 
-        self.rewardsPlus = np.asarray(rewards.tolist() + [bootStrapValue])
-        discountedRewards = self.discount(self.rewardsPlus, gamma)[:-1]
-        self.valuePlus = np.asarray(values + [bootStrapValue])
-        # Calculates the generalized advantage estimate
-        advantages = rewards + gamma * self.valuePlus[1:] - self.valuePlus[:-1]
-        advantages = self.discount(advantages, gamma)
+            self.rewardsPlus = np.asarray(rewards.tolist() + [bootStrapValue])
+            discountedRewards = self.discount(self.rewardsPlus, gamma)[:-1]
+            self.valuePlus = np.asarray(values + [bootStrapValue])
+            # Calculates the generalized advantage estimate
+            advantages = rewards + gamma * self.valuePlus[1:] - self.valuePlus[:-1]
+            advantages = self.discount(advantages, gamma)
 
-        # Update the global network using gradients from loss
-        # Generate network statistics to periodically save
-        self.sess.run(self.updateLocalVars)
-        rnnState = self.localAC.stateInit
-        feedDict = {self.localAC.targetV: discountedRewards,
-                    self.localAC.frame: frames,
-                    self.localAC.actions: actions,
-                    self.localAC.advantages: advantages,
-                    self.localAC.stateIn[0]: rnnState[0],
-                    self.localAC.stateIn[1]: rnnState[1]}
-        vl, pl, e, gn, vn, _ = self.sess.run([self.localAC.valueLoss,
-                                              self.localAC.policyLoss,
-                                              self.localAC.entropy,
-                                              self.localAC.gradNorms,
-                                              self.localAC.varNorms,
-                                              self.localAC.applyGradsGlobal],
-                                              feed_dict=feedDict)
+            # Update the global network using gradients from loss
+            # Generate network statistics to periodically save
+            self.sess.run(self.updateLocalVars)
+            rnnState = self.localAC.stateInit
+            feedDict = {self.localAC.targetV: discountedRewards,
+                        self.localAC.frame: frames,
+                        self.localAC.actions: actions,
+                        self.localAC.advantages: advantages,
+                        self.localAC.stateIn[0]: rnnState[0],
+                        self.localAC.stateIn[1]: rnnState[1]}
+            vl, pl, e, gn, vn, _ = self.sess.run([self.localAC.valueLoss,
+                                                  self.localAC.policyLoss,
+                                                  self.localAC.entropy,
+                                                  self.localAC.gradNorms,
+                                                  self.localAC.varNorms,
+                                                  self.localAC.applyGradsGlobal],
+                                                  feed_dict=feedDict)
 
-        self.summaryData[str(worker)].extend(size, vl, pl, e, gn, vn, score)
-        if bootStrapValue == 0: # This means that a worker has finished an episode
-            self.sess.run(self.incrementGE)
-            print("{} is training with worker{}s data!".format(self.name, worker))
-            self.summaryData[str(worker)].write(self.sess.run(self.localAC.lr), self.sess.run(self.localEpisodes))
-            self.summaryData[str(worker)].clear()
+            self.summaryData[str(worker)].extend(size, vl, pl, e, gn, vn, score)
+            if bootStrapValue == 0:  # This means that a worker has finished an episode
+                self.sess.run(self.incrementGE)
+                self.sess.run(self.incrementLE)
+                print("{} is training with worker{}s data!".format(self.name, worker))
+                if self.sess.run(self.localEpisodes) % self.settings.logFreq == 0:
+                    self.summaryData[str(worker)].write(self.sess.run(self.localAC.lr), self.sess.run(self.localEpisodes))
+                self.summaryData[str(worker)].clear()
 
 class SummaryData:
     def __init__(self, writer):
