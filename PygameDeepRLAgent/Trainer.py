@@ -42,19 +42,13 @@ class Trainer(Thread):
         for i in range(self.settings.workersPerTrainer):
             workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, self.trainerQueue, self.coord))
             self.summaryData[str(i)] = SummaryData(self.writer)
-        while not self.coord.should_stop() or self.isAlive(workers):
+        while not self.coord.should_stop():
             self.train()
             for worker in workers:
                 worker.work()
         for worker in workers:
             worker.stop()
         print("{} is quitting!".format(self.name))
-
-    def isAlive(self, workers):
-        for worker in workers:
-            if worker.is_alive():
-                return True
-        return False
 
     def discount(self, x, gamma):
         return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
