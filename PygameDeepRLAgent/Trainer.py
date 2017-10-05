@@ -141,28 +141,3 @@ class SummaryData:
                           simple_value=float(lr))
         self.writer.add_summary(summary, episode)
         self.writer.flush()
-
-
-
-    '''
-    def makeGifs(self, episodeData, episodeCount, settings):
-        plusRewardIndex = -1
-        minusRewardIndex = -1
-        giflen = 10
-        for i, episode in enumerate(episodeData):
-            if i > giflen and i < len(episodeData) - giflen:
-                if episode[2] > 0:
-                    plusRewardIndex = i
-                if episode[2] < 0:
-                    minusRewardIndex = i
-                if minusRewardIndex != -1 and plusRewardIndex != -1:
-                    break
-        frames = episodeData[:, 0]
-        frames = np.asarray(frames.tolist())
-        if plusRewardIndex != -1:
-            imageio.mimsave(settings.gifPath + "_plus_" + settings.activity + "_" + str(episodeCount) + ".gif",
-                            frames[(plusRewardIndex - giflen):(plusRewardIndex + giflen)])
-        if minusRewardIndex != -1:
-            imageio.mimsave(settings.gifPath + "_minus_" + settings.activity + "_" + str(episodeCount) + ".gif",
-                            frames[(minusRewardIndex - giflen):(minusRewardIndex + giflen)])
-    '''

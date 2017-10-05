@@ -2,14 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import sys
-from threading import Thread
+from multiprocessing import Process
 
-import tensorflow as tf
-
-from ACNetworkLSTM import ACNetworkLSTM
-from Trainer import Trainer
 from init import Settings
 
 def utilityThread(settings, sess, saver, globalEpisodes, coord):
@@ -32,15 +26,16 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
     print("Program is terminating, utilityThread is saving the model!")
     saver.save(sess, settings.tfGraphPath + settings.agentName, sess.run(globalEpisodes))
 
-def main():
-    if len(sys.argv) == 2:
-        settings = Settings(sys.argv[1])
-    else:
-        settings = Settings()
+def run(settings = Settings()):
+    from threading import Thread
+    import tensorflow as tf
+    import os
+
+    from ACNetworkLSTM import ACNetworkLSTM
+    from Trainer import Trainer
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
-    #config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         with tf.device("/cpu:0"):
@@ -61,6 +56,33 @@ def main():
         for thread in threads:
             thread.start()
         coord.join(threads)
+
+def startProcess(exp):
+    settings = Settings()
+    settings.learningRate = 1 / (10 ** exp)
+    print("Learning rate: " + str(settings.learningRate))
+    settings.generateActivity()
+    settings.generatePaths()
+    process = Process(target=run, args=(settings,))
+    process.start()
+    return process
+
+def join(processes):
+    for process in processes:
+        process.join()
+
+def main():
+    exp = 0
+    processes = []
+    for i in range(5):
+        exp += 1
+        processes.append(startProcess(exp))
+        exp += 1
+        processes.append(startProcess(exp))
+        join(processes)
+        processes = []
+
+
 
 if __name__ == "__main__":
     main()

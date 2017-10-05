@@ -4,21 +4,15 @@ from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
 
 class Settings():
     def __init__(self, game=None):
-        # General settings:
-        self.version = "1.20"
-        self.agentName = "A3CMaster"
-        self.activity = "MDG_LSTM_1e-5LR_8T_4W"
-        self.gpuMemoryFraction = 1.0
-
         # Game settings:
         if game:
             self.game = game
         else:
-            self.game = "MultiDuelGrounds"
-        self.screenRes = 1000 # Screen is always a square
-        self.gameSecond = 60 # Amount of frames considered a second in game
-        self.fps = 60 # Maximum fps for the game
-        self.mspf = 1 / self.fps * 1000 # miliseconds per frame
+            self.game = "ShootingGrounds"
+        self.screenRes = 1000  # Screen is always a square
+        self.gameSecond = 60  # Amount of frames considered a second in game
+        self.fps = 60  # Maximum fps for the game
+        self.mspf = 1 / self.fps * 1000  # miliseconds per frame
 
         self.quadTreeDepth = 3
         self.quadTreeMaxObjects = 6
@@ -34,20 +28,18 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 1000000
+        self.trainingEpisodes = 40000
         self.logFreq = 50 # Log summaries every 50 episodes
 
         # Hyper parameters:
-        self.model = "ACNetwork"
-
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
         self.trainerCount = 8
-        self.workersPerTrainer = 4
+        self.workersPerTrainer = 2
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
-        self.learningRate = 1e-5
+        self.learningRate = 1e-3
         self.lrDecayRate = 1.00
         self.lrDecayStep = 100
         self.entropyWeight = 0.01
@@ -58,7 +50,22 @@ class Settings():
         self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
-        self.tfCheckpoint = 'C:/deepRLAgent/Agent/MultiDuelGrounds_ACNetwork_MDG_LSTM_1e-6LR_16T_2W_A3CMaster_1.20A3CMaster-146559'  # Check point to load
-        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}_{}_{}_{}_{}'.format(self.game, self.model, self.activity, self.agentName, self.version)
-        self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}/{}/{}'.format(self.game, self.model, self.activity, self.agentName, self.version)
-        self.gifPath = 'C:/deepRLAgent/gif/{}_{}'.format(self.agentName, self.version)
+
+        # General settings:
+        self.version = "1.30"
+        self.generateActivity()
+        self.gpuMemoryFraction = 1.0
+
+        # File paths
+        self.tfCheckpoint = 'C:/deepRLAgent/Agent/MultiDuelGrounds_ACNetwork_MDG_LSTM_5e-4LR_16T_2W_A3CMaster_1.20A3CMaster-184229'  # Check point to load
+        self.generatePaths()
+
+    def generateActivity(self):
+        self.activity = "{}LR_{}LRDR_{}LRDS_{}DLRRate_{}T-{}W_{}Episodes".format(
+            self.learningRate, self.lrDecayRate, self.lrDecayStep, self.deepRLRate,
+            self.trainerCount, self.workersPerTrainer, self.trainingEpisodes
+        )
+
+    def generatePaths(self):
+        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}_{}_{}'.format(self.game, self.activity, self.version)
+        self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}'.format(self.game, self.activity, self.version)

@@ -40,7 +40,7 @@ class ACNetworkLSTM:
             cIn = tf.placeholder(shape=[1, lstmCell.state_size.c], dtype=tf.float32, name="cIn")
             hIn = tf.placeholder(shape=[1, lstmCell.state_size.h], dtype=tf.float32, name="hIn")
             self.stateIn = [cIn, hIn]
-            rnnIn = tf.expand_dims(slim.flatten(self.conv3), [0])
+            rnnIn = tf.expand_dims(self.flatten(self.conv3), [0])
             stepSize = tf.shape(self.input)[:1]
             stateIn = tf.contrib.rnn.LSTMStateTuple(cIn, hIn)
             lstmOutputs, lstmState = tf.nn.dynamic_rnn(
@@ -108,3 +108,6 @@ class ACNetworkLSTM:
             out *= std / np.sqrt(np.square(out).sum(axis=0, keepdims=True))
             return tf.constant(out)
         return _initializer
+
+    def flatten(self, x):
+        return tf.reshape(x, [-1, np.prod(x.get_shape().as_list()[1:])])
