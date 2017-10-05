@@ -93,6 +93,9 @@ class Trainer(Thread):
                                                   self.localAC.varNorms,
                                                   self.localAC.applyGradsGlobal],
                                                   feed_dict=feedDict)
+            if (e/size < 0.01):
+                print("Model collapses, entropy: {}".format(e/size))
+                self.coord.request_stop()
 
             self.summaryData[str(worker)].extend(size, vl, pl, e, gn, vn, score)
             if bootStrapValue == 0:  # This means that a worker has finished an episode

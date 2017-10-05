@@ -29,7 +29,7 @@ class Settings():
 
         # AI settings:
         self.trainingEpisodes = 40000
-        self.logFreq = 50 # Log summaries every 50 episodes
+        self.logFreq = 10 # Log summaries every 50 episodes
 
         # Hyper parameters:
         self.gameRes = 80
@@ -47,7 +47,7 @@ class Settings():
         self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
         self.loadCheckpoint = False
-        self.saveCheckpoint = True
+        self.saveCheckpoint = False
         self.logSummaries = True
         self.train = True
 

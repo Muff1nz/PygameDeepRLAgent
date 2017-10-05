@@ -24,7 +24,7 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
             coord.request_stop()
 
     print("Program is terminating, utilityThread is saving the model!")
-    saver.save(sess, settings.tfGraphPath + settings.agentName, sess.run(globalEpisodes))
+    saver.save(sess, settings.tfGraphPath + settings.activity, sess.run(globalEpisodes))
 
 def run(settings = Settings()):
     from threading import Thread
