@@ -1,29 +1,28 @@
-from multiprocessing import Queue
 import numpy as np
 
+# The worker class is a member of the trainer class, the trainer can have multiple workers
 class Worker():
-    def __init__(self, settings, sess, trainerName, number, network, queue, coord):
+    def __init__(self, settings, sess, trainerName, number, network, queues, coord):
         self.localAC = network
         self.name = '{}_worker{}'.format(trainerName, number)
         self.number = number
         self.settings = settings
-        self.trainerQueue = queue
+        self.trainerQueue = queues["trainer"]
         self.coord = coord
         self.sess = sess
-        self.gameDataQueue = Queue()
-        self.playerActionQueue = Queue()
+        self.gameDataQueue = queues["gameData"]
+        self.playerActionQueue = queues["playerAction"]
         self.game = None
         self.playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
-        self.game = self.settings.games[self.settings.game][0](self.settings,
-                                                               self.gameDataQueue,
-                                                               self.playerActionQueue)
-        self.game.start()
+
         self.episodeInProgress = True
         self.values = []
         self.rnnState = self.localAC.stateInit
 
 
     def work(self):
+        if self.gameDataQueue.empty():
+            return # Nothing to do here, return control to caller
         gameData = self.gameDataQueue.get() # Get data from the game
         if gameData[0] == "CurrentFrame": # Process the next action based on frame
             frame = gameData[1]

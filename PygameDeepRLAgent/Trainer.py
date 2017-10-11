@@ -1,5 +1,6 @@
 from queue import Queue
 from threading import Thread
+from multiprocessing import Queue as PQueue, Process
 
 import numpy as np
 import scipy.signal
@@ -7,9 +8,7 @@ import tensorflow as tf
 
 from ACNetworkLSTM import ACNetworkLSTM
 from Worker import Worker
-
-import time
-
+import GameRunner
 
 class Trainer(Thread):
     def __init__(self, settings, sess, number, coord, globalEpisodes):
@@ -38,16 +37,31 @@ class Trainer(Thread):
             self.updateLocalVars.append(lnVars.assign(gnVars))
 
     def run(self):
+        #===INIT=====
         workers = []
-        for i in range(self.settings.workersPerTrainer):
-            workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, self.trainerQueue, self.coord))
+        gameDataQueues = [] # used by workers and games
+        playerActionQueues = [] # used by workers and games
+        for i in range(self.settings.workersPerTrainer): # Set up all the workers
+            gameDataQueue = PQueue()
+            playerActionQueue = PQueue()
+            queues = {"trainer": self.trainerQueue,
+                      "gameData": gameDataQueue,
+                      "playerAction": playerActionQueue}
+            workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, queues, self.coord))
+            gameDataQueues.append(gameDataQueue)
+            playerActionQueues.append(playerActionQueue)
             self.summaryData[str(i)] = SummaryData(self.writer)
+        gameProcess = Process(target=(GameRunner.run), args=(self.settings, gameDataQueues, playerActionQueues))
+        #===RUN====
+        gameProcess.start()
         while not self.coord.should_stop():
             self.train()
             for worker in workers:
                 worker.work()
+        #===CLEANUP====
         for worker in workers:
             worker.stop()
+        gameProcess.terminate()
         print("{} is quitting!".format(self.name))
 
     def discount(self, x, gamma):

@@ -1,4 +1,4 @@
-from multiprocessing import Process
+import asyncio
 import numpy as np
 import pygame
 
@@ -10,14 +10,14 @@ from A3CBootcampGame.physics import physicsHandler
 
 WHITE = 255, 255, 255
 # Class for the shooting grounds level in A3CBootCamp
-class ShootingGrounds(Process):
+class ShootingGrounds():
     def __init__(self, settings, gameDataQueue, playerActionQueue):
-        Process.__init__(self)
         self.settings = settings
         self.gameDataQueue = gameDataQueue
         self.playerActionQueue = playerActionQueue
+        self.initGame()
 
-    def initGame(self):
+    def initGame(self): # This function was created to do init in the run function when this class was a process
         initSettings = self.playerActionQueue.get()
         if initSettings[0] == "WindowSettings":
             self.window = initSettings[1]
@@ -54,8 +54,7 @@ class ShootingGrounds(Process):
         boxes.append(self.targetHandler.target)
         self.physics = physicsHandler(self.world.walls, boxes, collisionGroups, self.settings)
 
-    def run(self):
-        self.initGame()
+    async def run(self):
         while True:
             if not self.episodeInProgress:
                 # send data to worker
@@ -88,6 +87,8 @@ class ShootingGrounds(Process):
                 frame = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
                 # Send frame to agent
                 self.gameDataQueue.put(["CurrentFrame", frame])
+                while self.playerActionQueue.empty(): # Yield to let other games run, to prevent blocking on the queue
+                    await asyncio.sleep(0.005)
                 self.playerAction = self.playerActionQueue.get()
                 self.timeStep += 1
                 # Rewards default to 0, game handler will track causality and update

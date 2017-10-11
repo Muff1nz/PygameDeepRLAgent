@@ -7,15 +7,13 @@ from multiprocessing import Process
 from init import Settings
 
 def utilityThread(settings, sess, saver, globalEpisodes, coord):
-    lastEpisodePrint = 0
+    import time
     lastSave = 0
     while not coord.should_stop():
         episodeNumber = sess.run(globalEpisodes)
-        if (episodeNumber % 5 == 0 and episodeNumber != lastEpisodePrint):
-            print("Global episodes: {}".format(sess.run(globalEpisodes)))
-            lastEpisodePrint = episodeNumber
+        print("|| __ {} __ || Global episodes: {} ||".format(settings.activity, sess.run(globalEpisodes)))
 
-        if (episodeNumber % 10000 == 0 and episodeNumber != lastSave):
+        if (episodeNumber > 10000 + lastSave and episodeNumber != lastSave and settings.saveCheckpoint):
             print("UtilityThread is saving the model!")
             saver.save(sess, settings.tfGraphPath + settings.agentName, episodeNumber)
             lastSave = episodeNumber
@@ -23,11 +21,13 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
         if (episodeNumber > settings.trainingEpisodes):
             coord.request_stop()
 
-    print("Program is terminating, utilityThread is saving the model!")
-    saver.save(sess, settings.tfGraphPath + settings.activity, sess.run(globalEpisodes))
+        time.sleep(2) # This function needs little CPU time
+
+    if (settings.saveCheckpoint):
+        print("Program is terminating, utilityThread is saving the model!")
+        saver.save(sess, settings.tfGraphPath + settings.activity, sess.run(globalEpisodes))
 
 def run(settings = Settings()):
-    from threading import Thread
     import tensorflow as tf
     import os
 
@@ -52,15 +52,15 @@ def run(settings = Settings()):
         else:
             sess.run(tf.global_variables_initializer())
 
-        threads.append(Thread(target=utilityThread, args=(settings, sess, saver, globalEpisodes, coord)))
         for thread in threads:
             thread.start()
+        utilityThread(settings, sess, saver, globalEpisodes, coord)
         coord.join(threads)
 
-def startProcess(exp):
+def startProcess(lr):
     settings = Settings()
-    settings.learningRate = 1 / (10 ** exp)
-    print("Learning rate: " + str(settings.learningRate))
+    settings.learningRate = lr
+    print("Learning rate: " + str(lr))
     settings.generateActivity()
     settings.generatePaths()
     process = Process(target=run, args=(settings,))
@@ -71,16 +71,21 @@ def join(processes):
     for process in processes:
         process.join()
 
+def lrSweep(): # This function will test varius learning rates
+    exp = 4
+    lr = 1
+    for i in range(6):
+        p = startProcess(lr / (10 ** exp))
+        p.join()
+        lr = 1 if exp == 5 else 5
+        if (lr == 5):
+            exp += 1
+
 def main():
-    exp = 0
     processes = []
-    for i in range(5):
-        exp += 1
-        processes.append(startProcess(exp))
-        exp += 1
-        processes.append(startProcess(exp))
-        join(processes)
-        processes = []
+    processes.append(startProcess(1e-4))
+    processes.append(startProcess(5e-5))
+    join(processes)
 
 
 

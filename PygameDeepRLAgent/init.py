@@ -1,3 +1,5 @@
+import multiprocessing
+
 from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
 from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
 from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
@@ -28,23 +30,23 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 40000
+        self.trainingEpisodes = 30000
         self.logFreq = 10 # Log summaries every 50 episodes
 
         # Hyper parameters:
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-        self.trainerCount = 8
-        self.workersPerTrainer = 2
+        self.trainerCount = 16
+        self.workersPerTrainer = 4
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
         self.learningRate = 1e-3
-        self.lrDecayRate = 1.00
-        self.lrDecayStep = 100
+        self.lrDecayRate = 0.97
+        self.lrDecayStep = 150
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
-        self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
         self.loadCheckpoint = False
         self.saveCheckpoint = False
@@ -59,6 +61,10 @@ class Settings():
         # File paths
         self.tfCheckpoint = 'C:/deepRLAgent/Agent/MultiDuelGrounds_ACNetwork_MDG_LSTM_5e-4LR_16T_2W_A3CMaster_1.20A3CMaster-184229'  # Check point to load
         self.generatePaths()
+
+        # Not counting main thread, because its mostly blocked
+        if (self.trainerCount * 2 > multiprocessing.cpu_count()):
+            raise RuntimeWarning("The programs thread+process count is larger then system thread count, may impair performance")
 
     def generateActivity(self):
         self.activity = "{}LR_{}LRDR_{}LRDS_{}DLRRate_{}T-{}W_{}Episodes".format(
