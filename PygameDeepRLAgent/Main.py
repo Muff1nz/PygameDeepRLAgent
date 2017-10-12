@@ -15,7 +15,7 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
 
         if (episodeNumber > 5000 + lastSave and settings.saveCheckpoint):
             print("UtilityThread is saving the model!")
-            saver.save(sess, settings.tfGraphPath + settings.activity, episodeNumber)
+            saver.save(sess, settings.tfGraphPath, episodeNumber)
             lastSave = episodeNumber
 
         if (episodeNumber > settings.trainingEpisodes):
@@ -25,7 +25,7 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
 
     if (settings.saveCheckpoint):
         print("Program is terminating, utilityThread is saving the model!")
-        saver.save(sess, settings.tfGraphPath + settings.activity, sess.run(globalEpisodes))
+        saver.save(sess, settings.tfGraphPath, sess.run(globalEpisodes))
 
 def run(settings = Settings()):
     import tensorflow as tf
@@ -57,8 +57,7 @@ def run(settings = Settings()):
         utilityThread(settings, sess, saver, globalEpisodes, coord)
         coord.join(threads)
 
-def startProcess(lr):
-    settings = Settings()
+def startProcess(settings, lr):
     settings.learningRate = lr
     print("Learning rate: " + str(lr))
     settings.generateActivity()
@@ -83,8 +82,10 @@ def lrSweep(): # This function will test varius learning rates
 
 def main():
     processes = []
-    processes.append(startProcess(1e-4))
-    processes.append(startProcess(5e-5))
+    conf1 = Settings()
+    processes.append(startProcess(conf1, 1e-4))
+    conf2 = Settings()
+    processes.append(startProcess(conf2, 5e-5))
     join(processes)
 
 

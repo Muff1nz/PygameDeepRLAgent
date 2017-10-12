@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 
 from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
 from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
@@ -54,12 +55,12 @@ class Settings():
         self.train = True
 
         # General settings:
-        self.version = "1.30"
+        self.version = "1.35"
         self.generateActivity()
         self.gpuMemoryFraction = 1.0
 
         # File paths
-        self.tfCheckpoint = 'C:/deepRLAgent/Agent/MultiDuelGrounds_ACNetwork_MDG_LSTM_5e-4LR_16T_2W_A3CMaster_1.20A3CMaster-184229'  # Check point to load
+        self.tfCheckpoint = 'not set'  # Check point to load
         self.generatePaths()
 
         # Not counting main thread, because its mostly blocked
@@ -73,5 +74,10 @@ class Settings():
         )
 
     def generatePaths(self):
-        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}_{}_{}'.format(self.game, self.activity, self.version)
+        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}/'.format(self.activity)
         self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}'.format(self.game, self.activity, self.version)
+
+        if not os.path.exists(self.tfGraphPath):
+            os.makedirs(self.tfGraphPath)
+            print("Path \"{}\" did not exist, so i made it".format(self.tfGraphPath))
+
