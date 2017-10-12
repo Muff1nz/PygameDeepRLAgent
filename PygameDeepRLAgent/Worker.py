@@ -69,6 +69,3 @@ class Worker():
 
         else:
             print("Invalid game data! got: {}".format(gameData[0]))
-
-    def stop(self):
-        self.game.terminate()

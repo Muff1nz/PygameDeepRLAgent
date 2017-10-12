@@ -59,10 +59,8 @@ class Trainer(Thread):
             for worker in workers:
                 worker.work()
         #===CLEANUP====
-        for worker in workers:
-            worker.stop()
-        gameProcess.terminate()
         print("{} is quitting!".format(self.name))
+        gameProcess.terminate()
 
     def discount(self, x, gamma):
         return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]

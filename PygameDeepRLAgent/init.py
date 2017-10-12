@@ -30,7 +30,7 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 30000
+        self.trainingEpisodes = 100000
         self.logFreq = 10 # Log summaries every 50 episodes
 
         # Hyper parameters:
@@ -38,7 +38,7 @@ class Settings():
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
         self.trainerCount = 16
-        self.workersPerTrainer = 4
+        self.workersPerTrainer = 2
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
         self.learningRate = 1e-3
@@ -49,7 +49,7 @@ class Settings():
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
         self.loadCheckpoint = False
-        self.saveCheckpoint = False
+        self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
 

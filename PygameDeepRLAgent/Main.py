@@ -13,9 +13,9 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
         episodeNumber = sess.run(globalEpisodes)
         print("|| __ {} __ || Global episodes: {} ||".format(settings.activity, sess.run(globalEpisodes)))
 
-        if (episodeNumber > 10000 + lastSave and episodeNumber != lastSave and settings.saveCheckpoint):
+        if (episodeNumber > 5000 + lastSave and settings.saveCheckpoint):
             print("UtilityThread is saving the model!")
-            saver.save(sess, settings.tfGraphPath + settings.agentName, episodeNumber)
+            saver.save(sess, settings.tfGraphPath + settings.activity, episodeNumber)
             lastSave = episodeNumber
 
         if (episodeNumber > settings.trainingEpisodes):
