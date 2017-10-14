@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import warnings
 
 from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
 from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
@@ -38,13 +39,13 @@ class Settings():
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-        self.trainerCount = 16
-        self.workersPerTrainer = 2
+        self.trainerCount = 32
+        self.workersPerTrainer = 1
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
-        self.learningRate = 1e-3
-        self.lrDecayRate = 0.97
-        self.lrDecayStep = 150
+        self.learningRate = 5e-5
+        self.lrDecayRate = 0.98
+        self.lrDecayStep = 140
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
@@ -65,7 +66,7 @@ class Settings():
 
         # Not counting main thread, because its mostly blocked
         if (self.trainerCount * 2 > multiprocessing.cpu_count()):
-            raise RuntimeWarning("The programs thread+process count is larger then system thread count, may impair performance")
+            warnings.warn("The programs thread+process count is larger then system thread count, may impair performance")
 
     def generateActivity(self):
         self.activity = "{}LR_{}LRDR_{}LRDS_{}DLRRate_{}T-{}W_{}Episodes".format(

@@ -82,8 +82,8 @@ def lrSweep(): # This function will test varius learning rates
 
 def main():
     processes = []
-    conf1 = Settings()
-    processes.append(startProcess(conf1, 1e-4))
+    #conf1 = Settings()
+    #processes.append(startProcess(conf1, 1e-4))
     conf2 = Settings()
     processes.append(startProcess(conf2, 5e-5))
     join(processes)
