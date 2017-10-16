@@ -33,6 +33,10 @@ class ACNetworkLSTM:
                 scope="conv3"
             )
 
+            conv3flat = self.flatten(self.conv3)
+            conv2lstm = slim.fully_connected(conv3flat, 1024, activation_fn=tf.nn.elu)
+            rnnIn = tf.expand_dims(conv2lstm, [0])
+
             lstmCell = tf.contrib.rnn.BasicLSTMCell(256, state_is_tuple=True)
             cInit = np.zeros(shape=(1, lstmCell.state_size.c), dtype=np.float32)
             hInit = np.zeros(shape=(1, lstmCell.state_size.h), dtype=np.float32)
@@ -40,7 +44,6 @@ class ACNetworkLSTM:
             cIn = tf.placeholder(shape=[1, lstmCell.state_size.c], dtype=tf.float32, name="cIn")
             hIn = tf.placeholder(shape=[1, lstmCell.state_size.h], dtype=tf.float32, name="hIn")
             self.stateIn = [cIn, hIn]
-            rnnIn = tf.expand_dims(self.flatten(self.conv3), [0])
             stepSize = tf.shape(self.input)[:1]
             stateIn = tf.contrib.rnn.LSTMStateTuple(cIn, hIn)
             lstmOutputs, lstmState = tf.nn.dynamic_rnn(

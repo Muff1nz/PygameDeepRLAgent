@@ -39,8 +39,8 @@ class Settings():
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-        self.trainerCount = 32
-        self.workersPerTrainer = 1
+        self.trainerCount = 16
+        self.workersPerTrainer = 2
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
         self.learningRate = 5e-5
@@ -50,13 +50,13 @@ class Settings():
         self.valueWeight = 0.5
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
-        self.loadCheckpoint = False
+        self.loadCheckpoint = True
         self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
 
         # General settings:
-        self.version = "1.35"
+        self.version = "1.36"
         self.generateActivity()
         self.gpuMemoryFraction = 1.0
 
