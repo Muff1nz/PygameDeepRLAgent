@@ -19,10 +19,8 @@ class FeedingGrounds():
 
     def initGame(self):
         initSettings = self.playerActionQueue.get()
-        if initSettings[0] == "WindowSettings":
-            self.window = initSettings[1]
-        else:
-            print("UNKOWN INITSETTINGS: {}".format(initSettings[1]))
+        self.window = initSettings["WindowSettings"]
+        self.worker = initSettings["worker"]
 
         if self.window:
             pygame.display.init()
@@ -58,8 +56,8 @@ class FeedingGrounds():
         while True:
             if not self.episodeInProgress:
                 # send data to worker
-                self.gameDataQueue.put(["EpisodeData", np.array(self.episodeData)])
-                self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
+                self.gameDataQueue.put([self.worker,
+                                       ["EpisodeData", np.array(self.episodeData), self.gameHandler.playerScore]])
                 # reset game
                 self.episodeData = []
                 self.frames = []
@@ -86,7 +84,7 @@ class FeedingGrounds():
                 frame = pygame.surfarray.array3d(self.gameScreen.copy())
                 frame = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
                 # Send frame to agent
-                self.gameDataQueue.put(["CurrentFrame", frame])
+                self.gameDataQueue.put([self.worker, ["CurrentFrame", frame]])
                 while self.playerActionQueue.empty(): # Yield to let other games run, to prevent blocking on the queue
                     await asyncio.sleep(0.005)
                 self.playerAction = self.playerActionQueue.get()

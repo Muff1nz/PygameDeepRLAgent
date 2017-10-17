@@ -5,10 +5,6 @@ import numpy as np
 class ACNetworkLSTM:
     def __init__(self, settings, scope, step=0):
         with tf.variable_scope(scope):
-            self.queue = tf.FIFOQueue(2000, dtypes=[tf.float32, tf.float32, tf.int32, tf.float32, tf.float32, tf.float32])
-            self.samplePlaceholder = tf.placeholder(dtypes=[tf.float32, tf.float32, tf.int32, tf.float32, tf.float32, tf.float32])
-            self.enqueue = self.queue.enqueue([self.sample_placeholder])
-
             self.frame = tf.placeholder(shape=[None, settings.gameRes, settings.gameRes],
                                         dtype=tf.float32, name="frame")
             self.input = tf.reshape(self.frame, shape=[-1, settings.gameRes, settings.gameRes, 1])

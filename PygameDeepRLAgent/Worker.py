@@ -2,28 +2,27 @@ import numpy as np
 
 # The worker class is a member of the trainer class, the trainer can have multiple workers
 class Worker():
-    def __init__(self, settings, sess, trainerName, number, network, queues, coord):
+    def __init__(self, settings, sess, number, trainerNumber, network, queues, coord):
         self.localAC = network
-        self.name = '{}_worker{}'.format(trainerName, number)
+        self.name = 'worker{}'.format(number)
         self.number = number
         self.settings = settings
         self.trainerQueue = queues["trainer"]
+        self.trainerNumber = trainerNumber
         self.coord = coord
         self.sess = sess
-        self.gameDataQueue = queues["gameData"]
         self.playerActionQueue = queues["playerAction"]
         self.game = None
-        self.playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
+        self.playerActionQueue.put({"WindowSettings": True if self.name == "worker0" else False,
+                                    "worker": number})
 
         self.episodeInProgress = True
         self.values = []
         self.rnnState = self.localAC.stateInit
 
 
-    def work(self):
-        if self.gameDataQueue.empty():
-            return # Nothing to do here, return control to caller
-        gameData = self.gameDataQueue.get() # Get data from the game
+    def work(self, gameData):
+        gameData # Get data from the game
         if gameData[0] == "CurrentFrame": # Process the next action based on frame
             frame = gameData[1]
             feedDict = {self.localAC.frame: [frame],
@@ -48,17 +47,19 @@ class Worker():
                           "values": bootstrapValues,
                           "bootStrapValue": values[0],
                           "score": -1,
-                          "worker": self.number}
+                          "worker": self.number,
+                          "trainer": self.trainerNumber}
             self.trainerQueue.put(workerData)
 
         elif gameData[0] == "EpisodeData": # Episode is finished, perform training and logging
             episodeData = gameData[1]
-            score = self.gameDataQueue.get()[1]
+            score = gameData[2]
             workerData = {"episodeData": episodeData,
                           "values": self.values,
                           "bootStrapValue": 0,
                           "score": score,
-                          "worker": self.number}
+                          "worker": self.number,
+                          "trainer": self.trainerNumber}
             self.trainerQueue.put(workerData)
             self.values = []
             self.rnnState = self.localAC.stateInit
