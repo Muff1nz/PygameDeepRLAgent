@@ -8,11 +8,11 @@ class GameHandler:
         gameInProgress = True
         while len(events):
             event = events.pop()
-            if event[0] == "Player hit enemy!": # Assign reward
-                episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = 1
+            if "enemy" in event and "bullet" in event: # Assign reward
+                episodeData[event["timeStep"] - bootStrapCounter*bootStrapCutOff][2] = 1
                 self.playerScore += 1
-            elif event[0] == "Enemy hit player!":
-                episodeData[event[1] - bootStrapCounter*bootStrapCutOff][2] = -1
+            elif "player" in event and "bullet" in event:
+                episodeData[event["timeStep"] - bootStrapCounter*bootStrapCutOff][2] = -1
                 gameInProgress = False
         return gameInProgress
 

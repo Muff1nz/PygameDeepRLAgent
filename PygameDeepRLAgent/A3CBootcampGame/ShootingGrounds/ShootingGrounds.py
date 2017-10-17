@@ -1,23 +1,23 @@
-from multiprocessing import Process
-
+import asyncio
 import numpy as np
 import pygame
+
 from A3CBootcampGame.ShootingGrounds.Targets import TargetHandler
 from A3CBootcampGame.ShootingGrounds.GameHandler import GameHandler
 from A3CBootcampGame.ShootingGrounds.Player import Player
 from A3CBootcampGame.ShootingGrounds.world import World
-from A3CBootcampGame.ShootingGrounds.physics import physicsHandler
+from A3CBootcampGame.physics import physicsHandler
 
 WHITE = 255, 255, 255
 # Class for the shooting grounds level in A3CBootCamp
-class ShootingGrounds(Process):
+class ShootingGrounds():
     def __init__(self, settings, gameDataQueue, playerActionQueue):
-        Process.__init__(self)
         self.settings = settings
         self.gameDataQueue = gameDataQueue
         self.playerActionQueue = playerActionQueue
+        self.initGame()
 
-    def initGame(self):
+    def initGame(self): # This function was created to do init in the run function when this class was a process
         initSettings = self.playerActionQueue.get()
         if initSettings[0] == "WindowSettings":
             self.window = initSettings[1]
@@ -36,26 +36,35 @@ class ShootingGrounds(Process):
 
         self.gameCounter = 0
         self.playerAction = 0
-        self.playerTimeStep = -1
+        self.timeStep = -1
 
         self.world = World(self.settings)
         self.player = Player(self.settings, "./Assets/Player.png")
         self.targetHandler = TargetHandler(self.settings, self.player)
-        self.physics = physicsHandler(self.world, self.player, self.targetHandler, self.settings)
         self.gameHandler = GameHandler(self.player, self.targetHandler)
 
-    def run(self):
-        self.initGame()
+        collisionGroups = 2
+        boxes = []
+        self.player.collisionGroup = 0
+        boxes.append(self.player)
+        for bullet in self.player.ws.bullets:
+            bullet.collisionGroup = 0
+            boxes.append(bullet)
+        self.targetHandler.target.collisionGroup = 1
+        boxes.append(self.targetHandler.target)
+        self.physics = physicsHandler(self.world.walls, boxes, collisionGroups, self.settings)
+
+    async def run(self):
         while True:
             if not self.episodeInProgress:
                 # send data to worker
-                self.gameDataQueue.put(["EpisodeData", self.episodeData])
+                self.gameDataQueue.put(["EpisodeData", np.array(self.episodeData)])
                 self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
                 # reset game
                 self.episodeData = []
                 self.frames = []
                 self.gameHandler.resetGame()
-                self.playerTimeStep = -1
+                self.timeStep = -1
                 self.bootStrapCounter = 0
                 self.gameCounter = 0
 
@@ -64,12 +73,12 @@ class ShootingGrounds(Process):
             self.world.draw(self.gameScreen)
             self.targetHandler.draw(self.gameScreen)
             self.player.draw(self.gameScreen)
-            if self.settings.renderQuads:
-                self.physics.quadTree.draw(self.gameScreen)
             if self.window:
                 if pygame.mouse.get_focused():
+                    if self.settings.renderQuads:
+                        self.physics.quadTree.draw(self.gameScreen)
                     montiroFrame = pygame.transform.scale(self.gameScreen.copy(),
-                                                         (self.settings.screenRes, self.settings.screenRes))
+                                                          (self.settings.screenRes, self.settings.screenRes))
                     self.screen.blit(montiroFrame, montiroFrame.get_rect())
                     pygame.display.flip()
 
@@ -78,14 +87,16 @@ class ShootingGrounds(Process):
                 frame = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
                 # Send frame to agent
                 self.gameDataQueue.put(["CurrentFrame", frame])
+                while self.playerActionQueue.empty(): # Yield to let other games run, to prevent blocking on the queue
+                    await asyncio.sleep(0.005)
                 self.playerAction = self.playerActionQueue.get()
-                self.playerTimeStep += 1
+                self.timeStep += 1
                 # Rewards default to 0, game handler will track causality and update
                 self.episodeData.append([frame, self.playerAction, 0])
 
             # Update stuff
-            self.player.update(self.playerAction, self.playerTimeStep)
-            self.physics.update(self.playerTimeStep)
+            self.player.update(self.playerAction, self.timeStep)
+            self.physics.update(self.timeStep)
             self.targetHandler.update(self.gameCounter)
             self.episodeInProgress = self.gameHandler.update(self.physics.events, self.gameCounter, self.episodeData)
 

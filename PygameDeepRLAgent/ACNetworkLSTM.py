@@ -1,7 +1,3 @@
-'''
-Currently not supported
-'''
-
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
@@ -37,14 +33,17 @@ class ACNetworkLSTM:
                 scope="conv3"
             )
 
-            lstmCell = tf.contrib.rnn.BasicLSTMCell(128, state_is_tuple=True)
+            conv3flat = self.flatten(self.conv3)
+            conv2lstm = slim.fully_connected(conv3flat, 1024, activation_fn=tf.nn.elu)
+            rnnIn = tf.expand_dims(conv2lstm, [0])
+
+            lstmCell = tf.contrib.rnn.BasicLSTMCell(256, state_is_tuple=True)
             cInit = np.zeros(shape=(1, lstmCell.state_size.c), dtype=np.float32)
             hInit = np.zeros(shape=(1, lstmCell.state_size.h), dtype=np.float32)
             self.stateInit = [cInit, hInit]
             cIn = tf.placeholder(shape=[1, lstmCell.state_size.c], dtype=tf.float32, name="cIn")
             hIn = tf.placeholder(shape=[1, lstmCell.state_size.h], dtype=tf.float32, name="hIn")
             self.stateIn = [cIn, hIn]
-            rnnIn = tf.expand_dims(slim.flatten(self.conv3), [0])
             stepSize = tf.shape(self.input)[:1]
             stateIn = tf.contrib.rnn.LSTMStateTuple(cIn, hIn)
             lstmOutputs, lstmState = tf.nn.dynamic_rnn(
@@ -56,7 +55,7 @@ class ACNetworkLSTM:
             )
             lstmC, lstmH = lstmState
             self.stateOut = [lstmC[:1, :], lstmH[:1, :]]
-            rnnOut = tf.reshape(lstmOutputs, [-1, 128])
+            rnnOut = tf.reshape(lstmOutputs, [-1, 256])
 
             hidden = slim.fully_connected(rnnOut, 512, activation_fn=tf.nn.elu, scope="fc1")
             hidden2 = slim.fully_connected(hidden, 512, activation_fn=tf.nn.elu, scope="fc2")
@@ -112,3 +111,6 @@ class ACNetworkLSTM:
             out *= std / np.sqrt(np.square(out).sum(axis=0, keepdims=True))
             return tf.constant(out)
         return _initializer
+
+    def flatten(self, x):
+        return tf.reshape(x, [-1, np.prod(x.get_shape().as_list()[1:])])

@@ -21,7 +21,11 @@ class Player(Actor):
     def reset(self):
         self.pos = np.array([self.settings.gameRes / 2, self.settings.gameRes / 2])
 
+    def onBoxCollision(self, other):
+        pass
 
+    def onWallCollision(self):
+        pass
 
 
 

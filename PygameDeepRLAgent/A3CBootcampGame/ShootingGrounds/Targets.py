@@ -56,8 +56,9 @@ class Target(Actor):
         self.pos = pos
         self.active = True
 
-    def playerBulletCollision(self):
-        self.active = False
-
     def draw(self, screen):
         screen.blit(self.sprite, self.pos)
+
+    def onBoxCollision(self, other):
+        if other.type == "bullet":
+            self.active = False

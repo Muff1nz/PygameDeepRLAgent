@@ -8,10 +8,8 @@ class GameHandler:
     def update(self, events, timeStep, episodeData):
         while len(events):
             event = events.pop()
-            if event[0] == "Player hit target!": # Assign reward
-                #print(event);
-                #print(len(episodeData))
-                episodeData[event[1]][2] = 1
+            if "target" in event and "bullet" in event:
+                episodeData[event["timeStep"]][2] = 1 # enemy was hit by bullet
                 self.playerScore += 1
         if timeStep == self.episodeLength:
             return False
