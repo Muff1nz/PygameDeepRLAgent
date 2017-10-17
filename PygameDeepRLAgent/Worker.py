@@ -15,23 +15,6 @@ class Worker():
         self.game = None
         self.playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
 
-<<<<<<< HEAD
-    def run(self):
-        gameDataQueue, playerActionQueue = Queue(), Queue()
-        playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
-        game = ShootingGrounds(self.settings, gameDataQueue, playerActionQueue)
-        game.start()
-        while not self.coord.should_stop():
-                self.work(gameDataQueue, playerActionQueue)
-        print("{} is quitting!".format(self.name))
-        game.terminate()
-=======
-        self.episodeInProgress = True
-        self.values = []
-        self.rnnState = self.localAC.stateInit
->>>>>>> origin/master
-
-
     def work(self):
         if self.gameDataQueue.empty():
             return # Nothing to do here, return control to caller
@@ -79,10 +62,5 @@ class Worker():
             print("{}s game closed, saving and quitting program!".format(self.name))
             self.coord.request_stop()
 
-<<<<<<< HEAD
-            else:
-                print("Invalid game data! got: {}".format(gameData[0]))
-=======
         else:
             print("Invalid game data! got: {}".format(gameData[0]))
->>>>>>> origin/master

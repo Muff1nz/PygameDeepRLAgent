@@ -11,11 +11,7 @@ from Worker import Worker
 import GameRunner
 
 class Trainer(Thread):
-<<<<<<< HEAD
-    def __init__(self, settings, models, number, coord, globalEpisodes):
-=======
     def __init__(self, settings, sess, number, coord, globalEpisodes):
->>>>>>> origin/master
         Thread.__init__(self)
         self.settings = settings
         self.trainerQueue = Queue(5)
@@ -40,20 +36,6 @@ class Trainer(Thread):
         for gnVars, lnVars in zip(globalNetwork, localNetwork):
             self.updateLocalVars.append(lnVars.assign(gnVars))
 
-<<<<<<< HEAD
-    def init(self, sess):
-        self.sess = sess
-        workers = []
-        for i in range(self.settings.workersPerTrainer):
-            workers.append(Worker(self.settings, self.sess, self.name, i, self.localAC, self.trainerQueue, self.coord))
-            workers[i].start()
-
-    def isAlive(self, workers):
-        for worker in workers:
-            if worker.is_alive():
-                return True
-        return False
-=======
     def run(self):
         #===INIT=====
         workers = []
@@ -79,56 +61,11 @@ class Trainer(Thread):
         #===CLEANUP====
         print("{} is quitting!".format(self.name))
         gameProcess.terminate()
->>>>>>> origin/master
 
     def discount(self, x, gamma):
         return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
 
     def train(self):
-<<<<<<< HEAD
-        trainingData = self.trainerQueue.get()
-        qSize = self.trainerQueue.qsize()
-        print("{} is training! {} items left in queue".format(self.name, qSize))
-        self.sess.run(self.incrementGE)
-        episodeData = trainingData["episodeData"]
-        values = trainingData["values"]
-        bootStrapValue = trainingData["bootStrapValue"]
-        score = trainingData["score"]
-
-        frames = episodeData[:, 0]
-        actions = episodeData[:, 1]
-        rewards = episodeData[:, 2]
-        frames = np.asarray(frames.tolist())
-        size = len(episodeData)
-        gamma = self.settings.gamma
-
-        self.rewardsPlus = np.asarray(rewards.tolist() + [bootStrapValue])
-        discountedRewards = self.discount(self.rewardsPlus, gamma)[:-1]
-        self.valuePlus = np.asarray(values + [bootStrapValue])
-        # Calculates the generalized advantage estimate
-        advantages = rewards + gamma * self.valuePlus[1:] - self.valuePlus[:-1]
-        advantages = self.discount(advantages, gamma)
-
-        # Update the global network using gradients from loss
-        # Generate network statistics to periodically save
-        feedDict = { self.localAC.targetV: discountedRewards,
-                     self.localAC.frame: frames,
-                     self.localAC.actions: actions,
-                     self.localAC.advantages: advantages}
-        self.sess.run(self.updateLocalVars)
-        vl, pl, e, gn, vn, _ = self.sess.run([ self.localAC.valueLoss,
-                                          self.localAC.policyLoss,
-                                          self.localAC.entropy,
-                                          self.localAC.gradNorms,
-                                          self.localAC.varNorms,
-                                          self.localAC.applyGradsGlobal],
-                                          feed_dict=feedDict)
-        ##self.writeSummaries(vl/size, pl/size, e/size, gn, vn, score)
-
-
-
-    def writeSummaries(self, vl, pl, e, gn, vn, score):
-=======
         if not self.trainerQueue.empty():
             trainingData = self.trainerQueue.get()
             episodeData = trainingData["episodeData"]
@@ -207,7 +144,6 @@ class SummaryData:
         self.bootStrapCount = 0
 
     def write(self, lr, episode):
->>>>>>> origin/master
         summary = tf.Summary()
         summary.value.add(tag="Performance/Score", simple_value=self.score)
         summary.value.add(tag="Performance/BootStrapCount", simple_value=self.bootStrapCount)
