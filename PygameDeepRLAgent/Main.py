@@ -85,7 +85,7 @@ def main():
     #conf1 = Settings()
     #processes.append(startProcess(conf1, 1e-4))
     conf2 = Settings()
-    conf2.tfCheckpoint = 'C:\deepRLAgent\Agent\\5e-05LR_0.98LRDR_140LRDS_4DLRRate_16T-2W_100000Episodes\-70868'
+    conf2.tfCheckpoint = 'C:\deepRLAgent\Agent\\5e-05LR_0.98LRDR_140LRDS_4DLRRate_16T-2W_100000Episodes\-75625'
     processes.append(startProcess(conf2, 5e-5))
     join(processes)
 

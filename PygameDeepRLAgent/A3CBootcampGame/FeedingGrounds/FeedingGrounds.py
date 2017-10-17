@@ -58,7 +58,7 @@ class FeedingGrounds():
         while True:
             if not self.episodeInProgress:
                 # send data to worker
-                self.gameDataQueue.put(["EpisodeData", self.episodeData])
+                self.gameDataQueue.put(["EpisodeData", np.array(self.episodeData)])
                 self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
                 # reset game
                 self.episodeData = []

@@ -43,7 +43,7 @@ class Worker():
             print("{} is bootstrapping!".format(self.name))
             bootstrapValues = self.values[0:self.settings.bootStrapCutOff]
             values = self.values[self.settings.bootStrapCutOff::]
-            episodeData = np.array(gameData[1])
+            episodeData = gameData[1]
             workerData = {"episodeData": episodeData,
                           "values": bootstrapValues,
                           "bootStrapValue": values[0],
@@ -52,7 +52,7 @@ class Worker():
             self.trainerQueue.put(workerData)
 
         elif gameData[0] == "EpisodeData": # Episode is finished, perform training and logging
-            episodeData = np.array(gameData[1])
+            episodeData = gameData[1]
             score = self.gameDataQueue.get()[1]
             workerData = {"episodeData": episodeData,
                           "values": self.values,
