@@ -39,11 +39,11 @@ class Settings():
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-        self.trainerCount = 16
+        self.trainerCount = 4
         self.workersPerTrainer = 2
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
-        self.learningRate = 5e-5
+        self.learningRate = 4e-5
         self.lrDecayRate = 0.98
         self.lrDecayStep = 140
         self.entropyWeight = 0.01
@@ -59,6 +59,7 @@ class Settings():
         self.version = "1.36"
         self.generateActivity()
         self.gpuMemoryFraction = 1.0
+        self.psCount = 4
 
         # File paths
         self.tfCheckpoint = 'not set'  # Check point to load

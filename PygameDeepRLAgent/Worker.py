@@ -14,6 +14,8 @@ class Worker():
         self.playerActionQueue = queues["playerAction"]
         self.game = None
         self.playerActionQueue.put(["WindowSettings", True if self.name == "trainer0_worker0" else False])
+        self.rnnState = self.localAC.stateInit
+        self.values = []
 
     def work(self):
         if self.gameDataQueue.empty():

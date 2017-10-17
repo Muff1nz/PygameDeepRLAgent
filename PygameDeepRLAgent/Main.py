@@ -3,20 +3,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from threading import Thread
 from multiprocessing import Process
 import os
 
-from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
-from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
-from A3CBootcampGame.MultiDuelGrounds.MultiDuelGrounds import MultiDuelGrounds
-
-from ACNetwork import ACNetwork
 from ACNetworkLSTM import ACNetworkLSTM
 from Trainer import Trainer
 from init import Settings
 
-import time
 
 def getClusterSpec(settings):
     port = 0
@@ -44,8 +37,8 @@ def process(number, task):
 
     print("Making a server")
     if task == "ps":
-        config = tf.ConfigProto(device_filters=["/job:ps"])
-        config.gpu_options.per_process_gpu_memory_fraction = 0.0
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
         server = tf.train.Server(cluster,
                                  job_name=task,
                                  task_index=number,
@@ -54,23 +47,14 @@ def process(number, task):
 
     else:
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
+        config.gpu_options.allow_growth = True
         server = tf.train.Server(cluster,
                                  job_name=task,
                                  task_index=number,
                                  config=config)
 
-
-    games = {"FeedingGrounds": FeedingGrounds,
-             "ShootingGrounds": ShootingGrounds,
-             "MultiDuelGrounds": MultiDuelGrounds}
-
-    models = {"ACNetwork": ACNetwork,
-              "ACNetworkLSTM": ACNetworkLSTM}
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-    config = tf.ConfigProto()
-    ##config.gpu_options.allow_growth = True
+    config = tf.ConfigProto(device_count = {'GPU': 0})
+    config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = settings.gpuMemoryFraction
 
     with tf.device(tf.train.replica_device_setter(
@@ -78,9 +62,9 @@ def process(number, task):
             cluster=clusterSpec)):
         print("MAKING MODEL")
         globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
-        globalNetwork = models[settings.model](settings, "global")
+        globalNetwork = ACNetworkLSTM(settings, "global")
         coord = tf.train.Coordinator()
-        trainer = Trainer(settings, models, number, coord, globalEpisodes)
+        trainer = Trainer(settings, number, coord, globalEpisodes)
         #saver = tf.train.Saver(max_to_keep=1, keep_checkpoint_every_n_hours=2)
         initOp = tf.global_variables_initializer()
 
@@ -92,11 +76,8 @@ def process(number, task):
 
     with monitor as sess:
         print("MAKING A SESSION")
-        step = 0
         trainer.init(sess)
-        while True:
-            trainer.train()
-            step += 1
+        trainer.join()
 
 
 def main():

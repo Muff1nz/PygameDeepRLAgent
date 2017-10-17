@@ -11,7 +11,7 @@ from Worker import Worker
 import GameRunner
 
 class Trainer(Thread):
-    def __init__(self, settings, sess, number, coord, globalEpisodes):
+    def __init__(self, settings, number, coord, globalEpisodes):
         Thread.__init__(self)
         self.settings = settings
         self.trainerQueue = Queue(5)
@@ -35,6 +35,10 @@ class Trainer(Thread):
         self.updateLocalVars = []
         for gnVars, lnVars in zip(globalNetwork, localNetwork):
             self.updateLocalVars.append(lnVars.assign(gnVars))
+
+    def init(self, sess):
+        self.sess = sess
+        self.start()
 
     def run(self):
         #===INIT=====
