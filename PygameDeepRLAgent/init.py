@@ -1,16 +1,6 @@
-<<<<<<< HEAD
-class Settings():
-    def __init__(self):
-        # General settings:
-        self.version = "1.01"
-        self.agentName = "Bobby"
-        self.activity = "DistributedTF"
-        self.gpuMemoryFraction = 0.20
-=======
 import multiprocessing
 import os
 import warnings
->>>>>>> origin/master
 
 from A3CBootcampGame.FeedingGrounds.FeedingGrounds import FeedingGrounds
 from A3CBootcampGame.ShootingGrounds.ShootingGrounds import ShootingGrounds
@@ -49,16 +39,9 @@ class Settings():
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-<<<<<<< HEAD
-        self.trainerCount = 1
-        self.workersPerTrainer = 1
-        self.psCount = 1
-        self.maxEpisodeLength = 1200
-=======
         self.trainerCount = 16
         self.workersPerTrainer = 2
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
->>>>>>> origin/master
         self.bootStrapCutOff = 100
         self.learningRate = 5e-5
         self.lrDecayRate = 0.98

@@ -1,11 +1,3 @@
-'''
-Redesigning the program
-Currently not updated:
--FeedingGrounds game
--ShootingGrounds game
--ACNetworkLSTM model
-'''
-
 
 from __future__ import absolute_import
 from __future__ import division
