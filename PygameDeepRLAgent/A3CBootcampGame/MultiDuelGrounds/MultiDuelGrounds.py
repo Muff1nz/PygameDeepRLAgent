@@ -19,10 +19,8 @@ class MultiDuelGrounds():
 
     def initGame(self):
         initSettings = self.playerActionQueue.get()
-        if initSettings[0] == "WindowSettings":
-            self.window = initSettings[1]
-        else:
-            print("UNKOWN INITSETTINGS: {}".format(initSettings[1]))
+        self.window = initSettings["WindowSettings"]
+        self.worker = initSettings["worker"]
 
         if self.window:
             pygame.display.init()
@@ -66,8 +64,8 @@ class MultiDuelGrounds():
         while True:
             if not self.episodeInProgress:
                 # send data to worker
-                self.gameDataQueue.put(["EpisodeData", np.array(self.episodeData)])
-                self.gameDataQueue.put(["Score", self.gameHandler.playerScore])
+                self.gameDataQueue.put([self.worker,
+                                       ["EpisodeData", np.array(self.episodeData), self.gameHandler.playerScore]])
                 # reset game
                 self.episodeData = []
                 self.frames = []
@@ -102,13 +100,14 @@ class MultiDuelGrounds():
                     # as reward crediting is still in progress
                     bootStrapData = self.episodeData[0:self.settings.bootStrapCutOff]
                     self.episodeData = self.episodeData[self.settings.bootStrapCutOff::]
-                    self.gameDataQueue.put(["Bootstrap",
+                    self.gameDataQueue.put([self.worker,
+                                            ["Bootstrap",
                                             bootStrapData,
-                                            self.episodeData[0][0]])
+                                            self.episodeData[0][0]]])
                     self.bootStrapCounter += 1
 
                 # Send frame to agent
-                self.gameDataQueue.put(["CurrentFrame", frame])
+                    self.gameDataQueue.put([self.worker, ["CurrentFrame", frame]])
                 while self.playerActionQueue.empty():  # Yield to let other games run, to prevent blocking on the queue
                     await asyncio.sleep(0.005)
                 self.playerAction = self.playerActionQueue.get()

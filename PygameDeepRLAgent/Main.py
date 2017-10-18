@@ -19,12 +19,13 @@ def utilityThread(settings, sess, saver, globalEpisodes, coord):
             lastSave = episodeNumber
 
         if (episodeNumber > settings.trainingEpisodes):
+            print("Training done is done!!!!")
             coord.request_stop()
 
         time.sleep(2) # This function needs little CPU time
 
     if (settings.saveCheckpoint):
-        print("Program is terminating, utilityThread is saving the model!")
+        print("Program is terminating, saving the model!")
         saver.save(sess, settings.tfGraphPath, sess.run(globalEpisodes))
 
 def run(settings = Settings()):
@@ -32,19 +33,17 @@ def run(settings = Settings()):
     import os
 
     from ACNetworkLSTM import ACNetworkLSTM
-    from Trainer import Trainer
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
-        with tf.device("/cpu:0"):
-            globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
+        globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
         globalNetwork = ACNetworkLSTM(settings, "global")
         coord = tf.train.Coordinator()
-        threads = []
-        for i in range(settings.trainerCount):
-            threads.append(Trainer(settings, sess, i, coord, globalEpisodes))
+
+        trainers, workers, games = setupConcurrency(settings, sess, coord, globalEpisodes)
+
         saver = tf.train.Saver(max_to_keep=1, keep_checkpoint_every_n_hours=2)
 
         if settings.loadCheckpoint:
@@ -52,10 +51,65 @@ def run(settings = Settings()):
         else:
             sess.run(tf.global_variables_initializer())
 
-        for thread in threads:
+        for thread in trainers:
             thread.start()
+        for thread in workers:
+            thread.start()
+        for process in games:
+            process.start()
+
         utilityThread(settings, sess, saver, globalEpisodes, coord)
-        coord.join(threads)
+
+        for game in games:
+            game.terminate()
+
+def setupConcurrency(settings, sess, coord, globalEpisodes):
+    from queue import Queue
+    from multiprocessing import Queue as PQueue
+
+    import Concurrency
+    from Worker import Worker
+    from Trainer import Trainer
+
+    trainingQueues = []
+    trainerThreads = []
+    for i in range(settings.trainerThreads):
+        queue = Queue(100)
+        trainingQueues.append(queue)
+        trainerThreads.append(Concurrency.TrainerRunner(coord, queue))
+
+    gameDataQueues = []
+    workerThreads = []
+    for i in range(settings.workerThreads):
+        gameDataQueue = PQueue(100)
+        gameDataQueues.append(gameDataQueue)
+        workerThreads.append(Concurrency.WorkerRunner(coord, gameDataQueue))
+
+    gameProcesses = []
+    for i in range(settings.gameProcesses):
+        gameProcesses.append(Concurrency.GameRunner(settings))
+
+
+    trainers = []
+    for i in range(settings.trainers):
+        trainer = Trainer(settings, sess, i, coord, globalEpisodes)
+        trainers.append(trainer)
+        trainerThreads[i % len(trainerThreads)].addTrainer(trainer)
+
+    for i in range(settings.workers):
+        playerActionQueue = PQueue(100)
+
+        queues = {"trainer": trainingQueues[i%len(trainingQueues)],
+                  "gameData": gameDataQueue,
+                  "playerAction": playerActionQueue}
+        trainer = trainers[i%len(trainers)]
+        worker = Worker(settings, sess, i, trainer.number, trainer.localAC, queues, coord)
+        workerThreads[i % len(workerThreads)].addWorker(worker)
+        gameProcesses[i % len(gameProcesses)].addGame(gameDataQueues[i % len(gameDataQueues)], playerActionQueue)
+
+    return trainerThreads, workerThreads, gameProcesses
+
+
 
 def startProcess(settings, lr):
     settings.learningRate = lr
@@ -88,8 +142,6 @@ def main():
     conf2.tfCheckpoint = 'C:\deepRLAgent\Agent\\5e-05LR_0.98LRDR_140LRDS_4DLRRate_16T-2W_100000Episodes\-75625'
     processes.append(startProcess(conf2, 5e-5))
     join(processes)
-
-
 
 if __name__ == "__main__":
     main()

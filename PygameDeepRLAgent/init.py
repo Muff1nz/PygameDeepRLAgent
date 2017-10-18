@@ -32,15 +32,26 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 100000
+        self.trainingEpisodes = 1000
         self.logFreq = 10 # Log summaries every 50 episodes
+
+        # Training config
+        self.trainerThreads = 8
+        self.workerThreads = 8
+        self.gameProcesses = 16
+
+        self.trainers = 32
+        self.workers = 32
+
+        assert(self.trainers % self.trainerThreads == 0 and self.trainers > 0)
+        assert(self.workers % self.workerThreads == 0 and self.workers > 0)
+        assert(self.workers % self.gameProcesses == 0)
+        assert(self.workers % self.trainers == 0)
 
         # Hyper parameters:
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-        self.trainerCount = 16
-        self.workersPerTrainer = 2
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
         self.learningRate = 5e-5
@@ -50,7 +61,7 @@ class Settings():
         self.valueWeight = 0.5
         self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
-        self.loadCheckpoint = True
+        self.loadCheckpoint = False
         self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
@@ -58,20 +69,19 @@ class Settings():
         # General settings:
         self.version = "1.36"
         self.generateActivity()
-        self.gpuMemoryFraction = 1.0
 
         # File paths
         self.tfCheckpoint = 'not set'  # Check point to load
         self.generatePaths()
 
         # Not counting main thread, because its mostly blocked
-        if (self.trainerCount * 2 > multiprocessing.cpu_count()):
+        if (self.trainerThreads + self.workerThreads + self.gameProcesses > multiprocessing.cpu_count()):
             warnings.warn("The programs thread+process count is larger then system thread count, may impair performance")
 
     def generateActivity(self):
         self.activity = "{}LR_{}LRDR_{}LRDS_{}DLRRate_{}T-{}W_{}Episodes".format(
             self.learningRate, self.lrDecayRate, self.lrDecayStep, self.deepRLRate,
-            self.trainerCount, self.workersPerTrainer, self.trainingEpisodes
+            self.trainers, self.workers, self.trainingEpisodes
         )
 
     def generatePaths(self):
