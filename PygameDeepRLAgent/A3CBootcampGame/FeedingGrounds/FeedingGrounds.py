@@ -102,5 +102,5 @@ class FeedingGrounds():
                 # Check events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        self.gameDataQueue.put(["Game closed!"])
+                        self.gameDataQueue.put([self.worker, ["Game closed!"]])
             self.gameCounter += 1

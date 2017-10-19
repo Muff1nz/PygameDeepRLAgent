@@ -107,7 +107,7 @@ class MultiDuelGrounds():
                     self.bootStrapCounter += 1
 
                 # Send frame to agent
-                    self.gameDataQueue.put([self.worker, ["CurrentFrame", frame]])
+                self.gameDataQueue.put([self.worker, ["CurrentFrame", frame]])
                 while self.playerActionQueue.empty():  # Yield to let other games run, to prevent blocking on the queue
                     await asyncio.sleep(0.005)
                 self.playerAction = self.playerActionQueue.get()
@@ -128,5 +128,5 @@ class MultiDuelGrounds():
                 # Check events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        self.gameDataQueue.put(["Game closed!"])
+                        self.gameDataQueue.put([self.worker, ["Game closed!"]])
             self.gameCounter += 1

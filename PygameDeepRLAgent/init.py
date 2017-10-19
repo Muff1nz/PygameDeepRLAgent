@@ -12,7 +12,7 @@ class Settings():
         if game:
             self.game = game
         else:
-            self.game = "ShootingGrounds"
+            self.game = "MultiDuelGrounds"
         self.screenRes = 1000  # Screen is always a square
         self.gameSecond = 60  # Amount of frames considered a second in game
         self.fps = 60  # Maximum fps for the game
@@ -32,7 +32,7 @@ class Settings():
         self.causalityTracking = False
 
         # AI settings:
-        self.trainingEpisodes = 1000
+        self.trainingEpisodes = 1000000
         self.logFreq = 10 # Log summaries every 50 episodes
 
         # Training config
@@ -55,11 +55,11 @@ class Settings():
         self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
         self.bootStrapCutOff = 100
         self.learningRate = 5e-5
-        self.lrDecayRate = 0.98
-        self.lrDecayStep = 140
+        self.lrDecayRate = 0.97
+        self.lrDecayStep = 150
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
-        self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
 
         self.loadCheckpoint = False
         self.saveCheckpoint = True
