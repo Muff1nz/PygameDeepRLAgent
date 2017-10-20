@@ -54,10 +54,10 @@ class MultiDuelGrounds(BaseGame):
                self.drawWindow()
 
             if not self.gameCounter % self.settings.deepRLRate:
-                frame = self.sendFrameToWorker(bootstrap=True)
+                self.sendFrameToWorker(bootstrap=True)
                 while self.playerActionQueue.empty():  # Yield to let other games run, to prevent blocking on the queue
                     await asyncio.sleep(0.005)
-                self.getActionFromWorker(frame)
+                self.getActionFromWorker()
 
             # Update stuff
             self.player.update(self.playerAction, self.timeStep)

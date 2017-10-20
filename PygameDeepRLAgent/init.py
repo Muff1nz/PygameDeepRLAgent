@@ -12,7 +12,7 @@ class Settings():
         if game:
             self.game = game
         else:
-            self.game = "FeedingGrounds"
+            self.game = "ShootingGrounds"
         self.screenRes = 1000  # Screen is always a square
         self.gameSecond = 60  # Amount of frames considered a second in game
         self.fps = 60  # Maximum fps for the game
@@ -36,12 +36,12 @@ class Settings():
         self.logFreq = 10 # Log summaries every 50 episodes
 
         # Training config
-        self.trainerThreads = 4
-        self.workerThreads = 4
-        self.gameProcesses = 4
+        self.trainerThreads = 8
+        self.workerThreads = 8
+        self.gameProcesses = 16
 
-        self.trainers = 4
-        self.workers = 4
+        self.trainers = 32
+        self.workers = 32
 
         assert(self.trainers % self.trainerThreads == 0 and self.trainers > 0)
         assert(self.workers % self.workerThreads == 0 and self.workers > 0)
@@ -59,7 +59,8 @@ class Settings():
         self.lrDecayStep = 150
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
-        self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.frameSequenceLen = 3 # How many frames to stack together
 
         self.loadCheckpoint = False
         self.saveCheckpoint = True
@@ -86,7 +87,8 @@ class Settings():
 
     def generatePaths(self):
         self.tfGraphPath = 'C:/deepRLAgent/Agent/{}/{}/'.format(self.version, self.activity)
-        self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}'.format(self.game, self.activity, self.version)
+        self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}'.format(self.version, self.game, self.activity)
+        self.imagePath = 'C:/deepRLAgent/workerFrames/{}/{}/{}'.format(self.version, self.game, self.activity)
 
         if not os.path.exists(self.tfGraphPath):
             os.makedirs(self.tfGraphPath)

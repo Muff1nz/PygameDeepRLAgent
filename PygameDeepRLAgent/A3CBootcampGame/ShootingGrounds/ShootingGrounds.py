@@ -48,10 +48,10 @@ class ShootingGrounds(BaseGame):
                 self.drawWindow()
 
             if not self.gameCounter % self.settings.deepRLRate:
-                frame = self.sendFrameToWorker(bootstrap=False)
+                self.sendFrameToWorker(bootstrap=False)
                 while self.playerActionQueue.empty():  # Yield to let other games run, to prevent blocking on the queue
                     await asyncio.sleep(0.005)
-                self.getActionFromWorker(frame)
+                self.getActionFromWorker()
 
             # Update stuff
             self.player.update(self.playerAction, self.timeStep)

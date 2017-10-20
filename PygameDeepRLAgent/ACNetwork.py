@@ -5,31 +5,33 @@ import numpy as np
 class ACNetwork:
     def __init__(self, settings, scope, step=0):
         with tf.variable_scope(scope):
-            self.frame = tf.placeholder(shape=[None, settings.gameRes, settings.gameRes],
+            self.frame = tf.placeholder(shape=[None, settings.frameSequenceLen,
+                                               settings.gameRes, settings.gameRes],
                                         dtype=tf.float32, name="frame")
-            self.input = tf.reshape(self.frame, shape=[-1, settings.gameRes, settings.gameRes, 1])
-            self.conv1 = slim.conv2d(
+            self.input = tf.reshape(self.frame, shape=[-1, settings.frameSequenceLen,
+                                                       settings.gameRes, settings.gameRes, 1])
+            self.conv1 = slim.conv3d(
                 activation_fn=tf.nn.elu,
                 inputs=self.input,
                 num_outputs=16,
-                kernel_size=[16, 16],
-                stride=[2, 2],
+                kernel_size=[settings.frameSequenceLen, 16, 16],
+                stride=[1, 2, 2],
                 scope="conv1"
             )
-            self.conv2 = slim.conv2d(
+            self.conv2 = slim.conv3d(
                 activation_fn=tf.nn.elu,
                 inputs=self.conv1,
                 num_outputs=32,
-                kernel_size=[8, 8],
-                stride=[2, 2],
+                kernel_size=[1, 8, 8],
+                stride=[1, 2, 2],
                 scope="conv2"
             )
-            self.conv3 = slim.conv2d(
+            self.conv3 = slim.conv3d(
                 activation_fn=tf.nn.elu,
                 inputs=self.conv2,
                 num_outputs=64,
-                kernel_size=[4, 4],
-                stride=[2, 2],
+                kernel_size=[1, 4, 4],
+                stride=[1, 2, 2],
                 scope="conv3"
             )
             hidden = slim.fully_connected(slim.flatten(self.conv3), 1024, activation_fn=tf.nn.elu, scope="fc1")

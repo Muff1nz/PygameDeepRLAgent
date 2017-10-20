@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.signal
 import tensorflow as tf
+import imageio
+import os
 
 from ACNetwork import ACNetwork
 
@@ -81,6 +83,21 @@ class Trainer():
             if self.sess.run(self.localEpisodes) % self.settings.logFreq == 0:
                 self.summaryData[worker].write(self.sess.run(self.localAC.lr), self.sess.run(self.localEpisodes))
             self.summaryData[worker].clear()
+
+        if (self.sess.run(self.localEpisodes) % 100 == 0):
+            self.writeFramesToDisk(frames)
+
+    def writeFramesToDisk(self, frames):
+        print("{} is saving frames to disk".format(self.name))
+
+        path = "{}/{}/{}/".format(self.settings.imagePath, self.name, self.sess.run(self.localEpisodes))
+        if not os.path.exists(path):
+            print("{} is making path: {}".format(self.name, path))
+            os.makedirs(path)
+        framePick = np.random.randint(0, len(frames))
+        frameSeq = frames[framePick]
+        for i in range(self.settings.frameSequenceLen):
+            imageio.imwrite(path + "{}.png".format(i), frameSeq[i])
 
 class SummaryData:
     def __init__(self, writer):
