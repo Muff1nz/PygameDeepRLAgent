@@ -18,20 +18,15 @@ class Worker():
 
         self.episodeInProgress = True
         self.values = []
-        self.rnnState = self.localAC.stateInit
-
 
     def work(self, gameData):
         gameData # Get data from the game
         if gameData[0] == "CurrentFrame": # Process the next action based on frame
             frame = gameData[1]
-            feedDict = {self.localAC.frame: [frame],
-                        self.localAC.stateIn[0]: self.rnnState[0],
-                        self.localAC.stateIn[1]: self.rnnState[1]}
-            actionDist, value, self.rnnState = self.sess.run([self.localAC.logits,
-                                                         self.localAC.value,
-                                                         self.localAC.stateOut],
-                                                         feed_dict=feedDict)
+            feedDict = {self.localAC.frame: [frame]}
+            actionDist, value = self.sess.run([self.localAC.logits,
+                                               self.localAC.value],
+                                               feed_dict=feedDict)
             action = np.random.choice(actionDist[0], p=actionDist[0])
             action = np.argmax(actionDist==action)
 
@@ -62,7 +57,6 @@ class Worker():
                           "trainer": self.trainerNumber}
             self.trainerQueue.put(workerData)
             self.values = []
-            self.rnnState = self.localAC.stateInit
 
         elif gameData[0] == "Game closed!": # Game has been closed
             print("{}s game closed, saving and quitting program!".format(self.name))

@@ -6,6 +6,7 @@ from multiprocessing import Process
 
 from init import Settings
 
+
 def utilityThread(settings, sess, saver, globalEpisodes, coord):
     import time
     lastSave = sess.run(globalEpisodes)
@@ -32,14 +33,14 @@ def run(settings = Settings()):
     import tensorflow as tf
     import os
 
-    from ACNetworkLSTM import ACNetworkLSTM
+    from ACNetwork import ACNetwork
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         globalEpisodes = tf.Variable(0, dtype=tf.int32, name='global_episodes', trainable=False)
-        globalNetwork = ACNetworkLSTM(settings, "global")
+        globalNetwork = ACNetwork(settings, "global")
         coord = tf.train.Coordinator()
 
         trainers, workers, games = setupConcurrency(settings, sess, coord, globalEpisodes)

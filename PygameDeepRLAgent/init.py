@@ -12,7 +12,7 @@ class Settings():
         if game:
             self.game = game
         else:
-            self.game = "MultiDuelGrounds"
+            self.game = "FeedingGrounds"
         self.screenRes = 1000  # Screen is always a square
         self.gameSecond = 60  # Amount of frames considered a second in game
         self.fps = 60  # Maximum fps for the game
@@ -36,12 +36,12 @@ class Settings():
         self.logFreq = 10 # Log summaries every 50 episodes
 
         # Training config
-        self.trainerThreads = 8
-        self.workerThreads = 8
-        self.gameProcesses = 16
+        self.trainerThreads = 4
+        self.workerThreads = 4
+        self.gameProcesses = 4
 
-        self.trainers = 32
-        self.workers = 32
+        self.trainers = 4
+        self.workers = 4
 
         assert(self.trainers % self.trainerThreads == 0 and self.trainers > 0)
         assert(self.workers % self.workerThreads == 0 and self.workers > 0)
@@ -67,7 +67,7 @@ class Settings():
         self.train = True
 
         # General settings:
-        self.version = "1.36"
+        self.version = "1.37"
         self.generateActivity()
 
         # File paths
@@ -85,7 +85,7 @@ class Settings():
         )
 
     def generatePaths(self):
-        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}/'.format(self.activity)
+        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}/{}/'.format(self.version, self.activity)
         self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}'.format(self.game, self.activity, self.version)
 
         if not os.path.exists(self.tfGraphPath):

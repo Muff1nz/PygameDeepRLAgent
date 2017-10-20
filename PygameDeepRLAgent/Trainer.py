@@ -2,7 +2,8 @@ import numpy as np
 import scipy.signal
 import tensorflow as tf
 
-from ACNetworkLSTM import ACNetworkLSTM
+from ACNetwork import ACNetwork
+
 
 class Trainer():
     def __init__(self, settings, sess, number, coord, globalEpisodes):
@@ -21,7 +22,7 @@ class Trainer():
         self.writer = tf.summary.FileWriter(settings.tbPath + self.name)
         self.summaryData = {}
 
-        self.localAC = ACNetworkLSTM(settings, self.name, step=self.localSteps)
+        self.localAC = ACNetwork(settings, self.name, step=self.localSteps)
         globalNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'global')
         localNetwork = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, self.name)
         self.updateLocalVars = []
@@ -55,13 +56,10 @@ class Trainer():
         # Update the global network using gradients from loss
         # Generate network statistics to periodically save
         self.sess.run(self.updateLocalVars)
-        rnnState = self.localAC.stateInit
         feedDict = {self.localAC.targetV: discountedRewards,
                     self.localAC.frame: frames,
                     self.localAC.actions: actions,
-                    self.localAC.advantages: advantages,
-                    self.localAC.stateIn[0]: rnnState[0],
-                    self.localAC.stateIn[1]: rnnState[1]}
+                    self.localAC.advantages: advantages}
         vl, pl, e, gn, vn, _ = self.sess.run([self.localAC.valueLoss,
                                               self.localAC.policyLoss,
                                               self.localAC.entropy,
