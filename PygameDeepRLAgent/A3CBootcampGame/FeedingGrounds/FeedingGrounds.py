@@ -47,7 +47,7 @@ class FeedingGrounds(BaseGame):
                 self.drawWindow()
 
             if not self.gameCounter % self.settings.deepRLRate:
-                self.sendFrameToWorker(bootstrap=False)
+                self.sendFrameToWorker()
                 while self.playerActionQueue.empty():  # Yield to let other games run, to prevent blocking on the queue
                     await asyncio.sleep(0.005)
                 self.getActionFromWorker()
@@ -56,7 +56,11 @@ class FeedingGrounds(BaseGame):
             self.player.update(self.playerAction)
             self.physics.update(self.timeStep)
             self.foodHandler.update(self.gameCounter)
-            self.episodeInProgress = self.gameHandler.update(self.physics.events, self.gameCounter, self.episodeData)
+            self.episodeInProgress = self.gameHandler.update(self.physics.events,
+                                                             self.gameCounter,
+                                                             self.episodeData,
+                                                             self.bootStrapCounter,
+                                                             self.settings.bootStrapCutOff)
 
             if self.window:
                 if self.window:

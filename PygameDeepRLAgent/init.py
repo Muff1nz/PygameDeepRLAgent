@@ -29,10 +29,10 @@ class Settings():
         # If enabled, the game will assign rewards to the state-action-reward tuple that caused the reward.
         # If a bullet is shot at time step 10, and it hits a enemy at time step 15, the time step when the bullet
         # was shot will receive the reward, because that's the time step when the action causing the reward happened.
-        self.causalityTracking = False
+        self.causalityTracking = False # Not currently implemented after refactoring
 
         # AI settings:
-        self.trainingEpisodes = 1000000
+        self.trainingEpisodes = 150000
         self.logFreq = 10 # Log summaries every 50 episodes
 
         # Training config
@@ -40,7 +40,7 @@ class Settings():
         self.workerThreads = 8
         self.gameProcesses = 16
 
-        self.trainers = 32
+        self.trainers = 16
         self.workers = 32
 
         assert(self.trainers % self.trainerThreads == 0 and self.trainers > 0)
@@ -52,10 +52,10 @@ class Settings():
         self.gameRes = 80
         self.actionSize = self.games[self.game][1]
         self.gamma = 0.99
-        self.maxEpisodeLength = 1200 # Does not effect fixed episode length games (Feeding/Shooting grounds)
-        self.bootStrapCutOff = 100
-        self.learningRate = 5e-5
-        self.lrDecayRate = 0.97
+        self.maxEpisodeLength = 500 # When an episode last for more frames then this, training is bootstrapped
+        self.bootStrapCutOff = 450
+        self.learningRate = 1e-5
+        self.lrDecayRate = 0.98
         self.lrDecayStep = 150
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
@@ -86,8 +86,8 @@ class Settings():
         )
 
     def generatePaths(self):
-        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}/{}/'.format(self.version, self.activity)
-        self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}'.format(self.version, self.game, self.activity)
+        self.tfGraphPath = 'C:/deepRLAgent/Agent/{}/{}/{}/'.format(self.version, self.game, self.activity)
+        self.tbPath = 'C:/deepRLAgent/tensorboard/{}/{}/{}/'.format(self.version, self.game, self.activity)
         self.imagePath = 'C:/deepRLAgent/workerFrames/{}/{}/{}'.format(self.version, self.game, self.activity)
 
         if not os.path.exists(self.tfGraphPath):

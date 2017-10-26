@@ -5,11 +5,11 @@ class GameHandler:
         self.playerScore = 0
         self.episodeLength = 1200 # Amount of frames in a episode
 
-    def update(self, events, timeStep, episodeData):
+    def update(self, events, timeStep, episodeData, bootStrapCounter, bootStrapCutOff):
         while len(events):
             event = events.pop()
             if "target" in event and "bullet" in event:
-                episodeData[event["timeStep"]][2] = 1 # enemy was hit by bullet
+                episodeData[event["timeStep"] - bootStrapCounter * bootStrapCutOff][2] = 1 # enemy was hit by bullet
                 self.playerScore += 1
         if timeStep == self.episodeLength:
             return False

@@ -35,13 +35,13 @@ class Worker():
 
         elif gameData[0] == "Bootstrap": # Bootstrap from bootstrap data
             print("{} is bootstrapping!".format(self.name))
-            bootstrapValues = self.values[0:self.settings.bootStrapCutOff]
-            values = self.values[self.settings.bootStrapCutOff::]
             episodeData = gameData[1]
+            bootstrapValues = self.values[0:len(episodeData)]
+            self.values = self.values[len(episodeData)::]
             workerData = {"episodeData": episodeData,
                           "values": bootstrapValues,
-                          "bootStrapValue": values[0],
-                          "score": -1,
+                          "bootStrapValue": self.values[0],
+                          "score": 0,
                           "worker": self.number,
                           "trainer": self.trainerNumber}
             self.trainerQueue.put(workerData)

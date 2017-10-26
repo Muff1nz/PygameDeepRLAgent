@@ -54,8 +54,8 @@ class BaseGame():
             self.episodeData = self.episodeData[self.settings.bootStrapCutOff::]
             self.gameDataQueue.put([self.worker,
                                     ["Bootstrap",
-                                     bootStrapData,
-                                     self.episodeData[0][0]]])
+                                     np.array(bootStrapData),
+                                     0]])
             self.bootStrapCounter += 1
 
     def endEpisode(self):
@@ -85,7 +85,7 @@ class BaseGame():
             if event.type == pygame.QUIT:
                 self.gameDataQueue.put([self.worker, ["Game closed!"]])
 
-    def sendFrameToWorker(self, bootstrap):
+    def sendFrameToWorker(self):
         # Convert to grayscale
         frame = pygame.surfarray.array3d(self.gameScreen.copy())
         frame = np.dot(frame[..., :3], [0.299, 0.587, 0.114])
@@ -96,8 +96,7 @@ class BaseGame():
             self.frameSeq = np.roll(self.frameSeq, 1, 0)
             self.frameSeq[0] = frame
 
-        if (bootstrap):
-            self.bootStrap()
+        self.bootStrap()
 
         # Send frame to agent
         self.gameDataQueue.put([self.worker, ["CurrentFrame", self.frameSeq]])

@@ -41,6 +41,8 @@ class Trainer():
         score = trainingData["score"]
         worker = trainingData["worker"]
 
+        print("{} is training with worker{}s data!".format(self.name, worker))
+
         frames = episodeData[:, 0]
         actions = episodeData[:, 1]
         rewards = episodeData[:, 2]
@@ -69,9 +71,10 @@ class Trainer():
                                               self.localAC.varNorms,
                                               self.localAC.applyGradsGlobal],
                                               feed_dict=feedDict)
-        if (e/size < 0.01):
-            print("Model collapses, entropy: {}".format(e/size))
-            self.coord.request_stop()
+
+        #if (e/size < 0.01):
+        #    print("Model collapses, entropy: {}".format(e/size))
+        #    self.coord.request_stop()
 
         if (not worker in self.summaryData):
             self.summaryData[worker] = SummaryData(self.writer)
@@ -79,7 +82,6 @@ class Trainer():
         if bootStrapValue == 0:  # This means that a worker has finished an episode
             self.sess.run(self.incrementGE)
             self.sess.run(self.incrementLE)
-            print("{} is training with worker{}s data!".format(self.name, worker))
             if self.sess.run(self.localEpisodes) % self.settings.logFreq == 0:
                 self.summaryData[worker].write(self.sess.run(self.localAC.lr), self.sess.run(self.localEpisodes))
             self.summaryData[worker].clear()

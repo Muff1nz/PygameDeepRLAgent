@@ -70,7 +70,7 @@ class ACNetwork:
                     localVars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope)
                     self.gradients = tf.gradients(self.loss, localVars)
                     self.varNorms = tf.global_norm(localVars)
-                    self.grads, self.gradNorms = tf.clip_by_global_norm(self.gradients, 40)
+                    self.grads, self.gradNorms = tf.clip_by_global_norm(self.gradients, 10)
 
                     self.lr = tf.train.exponential_decay(settings.learningRate,
                                                          step,
