@@ -13,7 +13,7 @@ class ACNetwork:
             self.conv1 = slim.conv3d(
                 activation_fn=tf.nn.elu,
                 inputs=self.input,
-                num_outputs=16,
+                num_outputs=32,
                 kernel_size=[settings.frameSequenceLen, 16, 16],
                 stride=[1, 2, 2],
                 scope="conv1"
@@ -21,7 +21,7 @@ class ACNetwork:
             self.conv2 = slim.conv3d(
                 activation_fn=tf.nn.elu,
                 inputs=self.conv1,
-                num_outputs=32,
+                num_outputs=64,
                 kernel_size=[1, 8, 8],
                 stride=[1, 2, 2],
                 scope="conv2"
@@ -29,15 +29,15 @@ class ACNetwork:
             self.conv3 = slim.conv3d(
                 activation_fn=tf.nn.elu,
                 inputs=self.conv2,
-                num_outputs=64,
+                num_outputs=128,
                 kernel_size=[1, 4, 4],
                 stride=[1, 2, 2],
                 scope="conv3"
             )
-            hidden = slim.fully_connected(slim.flatten(self.conv3), 1024, activation_fn=tf.nn.elu, scope="fc1")
-            hidden2 = slim.fully_connected(hidden, 1024, activation_fn=tf.nn.elu, scope="fc2")
-            p0 = slim.fully_connected(hidden2, 512, activation_fn=tf.nn.elu, scope="p0")
-            v0 = slim.fully_connected(hidden2, 512, activation_fn=tf.nn.elu, scope="v0")
+            hidden = slim.fully_connected(slim.flatten(self.conv3), 2048, activation_fn=tf.nn.elu, scope="fc1")
+            hidden2 = slim.fully_connected(hidden, 2048, activation_fn=tf.nn.elu, scope="fc2")
+            p0 = slim.fully_connected(hidden2, 1024, activation_fn=tf.nn.elu, scope="p0")
+            v0 = slim.fully_connected(hidden2, 1024, activation_fn=tf.nn.elu, scope="v0")
             self.value = slim.fully_connected(v0, 1,
                                               activation_fn=None,
                                               weights_initializer=self.weightInit(1.0),

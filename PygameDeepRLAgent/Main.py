@@ -113,37 +113,19 @@ def setupConcurrency(settings, sess, coord, globalEpisodes):
 
 
 
-def startProcess(settings, lr):
-    settings.learningRate = lr
-    print("Learning rate: " + str(lr))
+def startProcess(settings):
+
     settings.generateActivity()
     settings.generatePaths()
     process = Process(target=run, args=(settings,))
     process.start()
     return process
 
-def join(processes):
-    for process in processes:
-        process.join()
-
-def lrSweep(): # This function will test varius learning rates
-    exp = 4
-    lr = 1
-    for i in range(6):
-        p = startProcess(lr / (10 ** exp))
-        p.join()
-        lr = 1 if exp == 5 else 5
-        if (lr == 5):
-            exp += 1
-
 def main():
-    processes = []
-    #conf1 = Settings()
-    #processes.append(startProcess(conf1, 1e-4))
-    conf2 = Settings()
-    conf2.tfCheckpoint = 'C:\deepRLAgent\Agent\\1.37\\5e-05LR_0.98LRDR_150LRDS_4DLRRate_16T-32W_200000Episodes\-50529'
-    processes.append(startProcess(conf2, 1e-5))
-    join(processes)
+    conf = Settings()
+    trainingSession = startProcess(conf)
+    trainingSession.join()
+
 
 if __name__ == "__main__":
     main()

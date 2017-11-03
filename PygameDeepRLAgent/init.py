@@ -12,7 +12,7 @@ class Settings():
         if game:
             self.game = game
         else:
-            self.game = "ShootingGrounds"
+            self.game = "MultiDuelGrounds"
         self.screenRes = 1000  # Screen is always a square
         self.gameSecond = 60  # Amount of frames considered a second in game
         self.fps = 60  # Maximum fps for the game
@@ -32,15 +32,15 @@ class Settings():
         self.causalityTracking = False # Not currently implemented after refactoring
 
         # AI settings:
-        self.trainingEpisodes = 150000
-        self.logFreq = 10 # Log summaries every 50 episodes
+        self.trainingEpisodes = 500000
+        self.logFreq = 20 # Log summaries every 20 episodes
 
         # Training config
-        self.trainerThreads = 8
+        self.trainerThreads = 4
         self.workerThreads = 8
         self.gameProcesses = 16
 
-        self.trainers = 16
+        self.trainers = 4
         self.workers = 32
 
         assert(self.trainers % self.trainerThreads == 0 and self.trainers > 0)
@@ -54,12 +54,12 @@ class Settings():
         self.gamma = 0.99
         self.maxEpisodeLength = 500 # When an episode last for more frames then this, training is bootstrapped
         self.bootStrapCutOff = 450
-        self.learningRate = 1e-5
-        self.lrDecayRate = 0.98
-        self.lrDecayStep = 150
+        self.learningRate = 5e-5
+        self.lrDecayRate = 0.97
+        self.lrDecayStep = 100
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
-        self.deepRLRate = 4 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
         self.frameSequenceLen = 3 # How many frames to stack together
 
         self.loadCheckpoint = False
@@ -68,7 +68,7 @@ class Settings():
         self.train = True
 
         # General settings:
-        self.version = "1.37"
+        self.version = "1.38"
         self.generateActivity()
 
         # File paths
