@@ -32,15 +32,15 @@ class Settings():
         self.causalityTracking = False # Not currently implemented after refactoring
 
         # AI settings:
-        self.trainingEpisodes = 500000
+        self.trainingEpisodes = 1000000
         self.logFreq = 20 # Log summaries every 20 episodes
 
         # Training config
-        self.trainerThreads = 4
+        self.trainerThreads = 8
         self.workerThreads = 8
         self.gameProcesses = 16
 
-        self.trainers = 4
+        self.trainers = 8
         self.workers = 32
 
         assert(self.trainers % self.trainerThreads == 0 and self.trainers > 0)
@@ -55,24 +55,24 @@ class Settings():
         self.maxEpisodeLength = 500 # When an episode last for more frames then this, training is bootstrapped
         self.bootStrapCutOff = 450
         self.learningRate = 5e-5
-        self.lrDecayRate = 0.97
-        self.lrDecayStep = 100
+        self.lrDecayRate = 0.98
+        self.lrDecayStep = 250
         self.entropyWeight = 0.01
         self.valueWeight = 0.5
-        self.deepRLRate = 2 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
+        self.deepRLRate = 1 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
         self.frameSequenceLen = 3 # How many frames to stack together
 
-        self.loadCheckpoint = False
+        self.loadCheckpoint = True
         self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
 
         # General settings:
-        self.version = "1.38"
+        self.version = "1.39"
         self.generateActivity()
 
         # File paths
-        self.tfCheckpoint = 'not set'  # Check point to load
+        self.tfCheckpoint = 'C:\deepRLAgent\Agent\\1.39\MultiDuelGrounds\\5e-05LR_0.98LRDR_250LRDS_1DLRRate_8T-32W_500000Episodes\-24237'  # Check point to load
         self.generatePaths()
 
         # Not counting main thread, because its mostly blocked
@@ -82,7 +82,7 @@ class Settings():
     def generateActivity(self):
         self.activity = "{}LR_{}LRDR_{}LRDS_{}DLRRate_{}T-{}W_{}Episodes".format(
             self.learningRate, self.lrDecayRate, self.lrDecayStep, self.deepRLRate,
-            self.trainers, self.workers, self.trainingEpisodes
+            self.trainers, self.workers, 500000
         )
 
     def generatePaths(self):
