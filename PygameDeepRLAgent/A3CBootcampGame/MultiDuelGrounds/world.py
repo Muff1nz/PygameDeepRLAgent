@@ -19,8 +19,6 @@ class World:
         for wall in self.walls:
             wall.draw(screen)
 
-
-
 class Line:
     def __init__(self, start, end):
         self.clr = BLACK

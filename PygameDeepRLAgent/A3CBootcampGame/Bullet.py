@@ -3,8 +3,8 @@ import numpy as np
 from A3CBootcampGame.Actor import Actor
 
 class Bullet(Actor):
-    def __init__(self, settings, sprite):
-        super(Bullet, self).__init__(settings, sprite, 0.05)
+    def __init__(self, settings, sprite, size=0.05):
+        super(Bullet, self).__init__(settings, sprite, size)
         self.type = "bullet"
         self.active = False
 

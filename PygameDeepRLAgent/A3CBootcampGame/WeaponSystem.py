@@ -2,14 +2,14 @@ from A3CBootcampGame.Bullet import Bullet
 
 
 class WeaponSystem:
-    def __init__(self, settings, sprite):
+    def __init__(self, settings, sprite, size=0.05):
         self.settings = settings
         self.active = False # Any active bullets?
 
         self.bulletCount = 50
         self.bullets = []
         for i in range(self.bulletCount):
-            self.bullets.append(Bullet(settings, sprite))
+            self.bullets.append(Bullet(settings, sprite, size))
         self.nextBullet = 0
         self.fireRate = 0.5
         self.timer = 0

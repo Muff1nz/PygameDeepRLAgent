@@ -36,7 +36,7 @@ class Settings():
         self.logFreq = 20 # Log summaries every 20 episodes
 
         # Training config
-        self.trainerThreads = 8
+        self.trainerThreads =8
         self.workerThreads = 8
         self.gameProcesses = 16
 
@@ -62,13 +62,13 @@ class Settings():
         self.deepRLRate = 1 # how many frames to wait for sampling experiences for deepRLAgent, and updating the agent
         self.frameSequenceLen = 3 # How many frames to stack together
 
-        self.loadCheckpoint = True
+        self.loadCheckpoint = False
         self.saveCheckpoint = True
         self.logSummaries = True
         self.train = True
 
         # General settings:
-        self.version = "1.39"
+        self.version = "1.4"
         self.generateActivity()
 
         # File paths

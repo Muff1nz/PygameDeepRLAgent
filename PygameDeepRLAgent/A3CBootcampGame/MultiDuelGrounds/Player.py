@@ -6,10 +6,10 @@ from A3CBootcampGame.WeaponSystem import WeaponSystem
 
 class Player(Actor):
     def __init__(self, settings, spritePath):
-        super(Player, self).__init__(settings, spritePath, 0.1)
+        super(Player, self).__init__(settings, spritePath, 0.075)
         self.type = "player"
         self.speed = settings.gameRes * 0.01
-        self.ws = WeaponSystem(settings, spritePath)
+        self.ws = WeaponSystem(settings, spritePath, 0.0075/2)
         self.moveDir = np.array([(0, 0), (0, 1), (0, -1), (1, 0), (-1, 0)])
         self.shootDir = np.array([(0, 1), (0, -1), (1, 0), (-1, 0)])
 

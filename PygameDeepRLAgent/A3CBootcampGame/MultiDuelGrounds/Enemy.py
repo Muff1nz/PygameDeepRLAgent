@@ -50,10 +50,10 @@ class EnemyHandler():
 
 class Enemy(Actor):
     def __init__(self, settings, spritePath):
-        super(Enemy, self).__init__(settings, spritePath, 0.1)
+        super(Enemy, self).__init__(settings, spritePath, 0.075)
         self.type = "enemy"
         self.speed = settings.gameRes * 0.01
-        self.ws = WeaponSystem(settings, spritePath)
+        self.ws = WeaponSystem(settings, spritePath, 0.075 / 2)
         self.strafeDir = np.zeros(2)
         self.shootDir = np.zeros(2)
 
