@@ -1,4 +1,4 @@
-I've been updating this readme as i experiment and make changes to the code, which could include changes to the actual neural network. This means that trying to reproduce these results now by using the parameters i used might not give the same results, because the network is likely different now from when i ran the training session that produced the result given in the readme. Looking at the version control history of this readme, and checkout out the commit that the result was added in should work.
+I've been updating this readme as i experiment and make changes to the code, which could include changes to the actual neural network. This means that trying to reproduce these results now by using the parameters i used might not give the same results, because the network is likely different now from when i ran the training session that produced the result given in the readme. Looking at the version control history of this readme, and checking out the commit that the result was added in should work.
 
 # PygameDeepRLAgent
 This project is about training deepRL agents at varius tasks made with pygame. Currently using an A3C agent.
